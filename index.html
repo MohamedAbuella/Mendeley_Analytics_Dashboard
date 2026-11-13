@@ -818,36 +818,36 @@
                     <span class="chevron">▶</span>
                 </button>
                 <div class="nav-sublist">
-                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-corpus-tab')">Fig. 6A: Title &amp; Abstract Word Cloud</button>
-                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-topics-tab')">Fig. 6B: Topic Cluster Word Clouds</button>
-                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-freq-tab')">Table 1: Top Corpus Terms &amp; Frequencies</button>
+                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-corpus-tab')">Title &amp; Abstract Word Cloud</button>
+                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-topics-tab')">Topic Cluster Word Clouds</button>
+                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-freq-tab')">Top Corpus Terms &amp; Frequencies</button>
                 </div>
             </div>
 
             <!-- Section 2: Bibliometric Visualizations -->
             <div class="nav-section">
                 <button class="nav-section-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                    <span>2. Bibliometric Distributions (Figs. 2–5)</span>
+                    <span>2. Bibliometric Distributions</span>
                     <span class="chevron">▶</span>
                 </button>
                 <div class="nav-sublist">
-                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-year-tab')">Fig. 2: Publications per Year</button>
-                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-type-tab')">Fig. 3: Publications per Document Type</button>
-                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-venue-tab')">Fig. 4: Top Journals &amp; Venues</button>
-                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-author-tab')">Fig. 5: Top Authors &amp; Mendeley Tags</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-year-tab')">Publications per Year</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-type-tab')">Publications per Document Type</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-venue-tab')">Top Journals &amp; Venues</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-author-tab')">Top Authors &amp; Mendeley Tags</button>
                 </div>
             </div>
 
             <!-- Section 3: Topic Modeling & Evolution -->
             <div class="nav-section">
                 <button class="nav-section-header" onclick="toggleAccordion(this)" aria-expanded="false">
-                    <span>3. Topic Modeling &amp; Evolution (Figs. 7–9)</span>
+                    <span>3. Topic Modeling &amp; Evolution</span>
                     <span class="chevron">▶</span>
                 </button>
                 <div class="nav-sublist">
-                    <button class="nav-item" onclick="switchView('topics', this, 'topic-map-tab')">Fig. 7: 2D Document-Topic Similarity Map</button>
-                    <button class="nav-item" onclick="switchView('topics', this, 'topic-dist-tab')">Fig. 8 &amp; 9: Topic Counts &amp; Yearly Evolution</button>
-                    <button class="nav-item" onclick="switchView('topics', this, 'topic-table-tab')">Table 2: Discovered Topic Cluster Summary</button>
+                    <button class="nav-item" onclick="switchView('topics', this, 'topic-map-tab')">2D Document-Topic Similarity Map</button>
+                    <button class="nav-item" onclick="switchView('topics', this, 'topic-dist-tab')">Topic Counts &amp; Yearly Evolution</button>
+                    <button class="nav-item" onclick="switchView('topics', this, 'topic-table-tab')">Discovered Topic Cluster Summary</button>
                 </div>
             </div>
 
@@ -909,7 +909,7 @@
         <!-- ========================================================= -->
         <section id="view-overview" class="view-section active">
             <div class="card">
-                <h3>Methodology &amp; Automated Analysis Pipeline (Fig. 1 of Abuella, 2024)</h3>
+                <h3>Methodology &amp; Automated Analysis Pipeline (Abuella, 2024)</h3>
                 <p>
                     This interactive dashboard implements the end-to-end automated academic literature review workflow described in <em>"Automating Academic Document Analysis with ChatGPT: A Mendeley Case"</em> (Mohamed Abuella, 2024). Directly inside your browser, it parses standard Mendeley-exported <code>.bib</code> files, extracts structured bibliometric fields (<code>title</code>, <code>abstract</code>, <code>author</code>, <code>year</code>, <code>journal</code>, <code>mendeley-tags</code>, <code>keywords</code>), computes TF-IDF weighted n-gram vectors, clusters documents into latent research themes, and renders publication-grade figures and tables with high-DPI PNG, vector PDF, and plain-text TXT exports.
                 </p>
@@ -1014,9 +1014,9 @@
         <!-- ========================================================= -->
         <section id="view-wordclouds" class="view-section">
             <div class="tab-bar">
-                <button class="tab-btn active" id="wc-corpus-tab" onclick="switchSubTab('wordclouds', 'wc-corpus-panel', this)">Fig. 6A: Corpus Word Cloud (Title &amp; Abstract)</button>
-                <button class="tab-btn" id="wc-topics-tab" onclick="switchSubTab('wordclouds', 'wc-topics-panel', this)">Fig. 6B: Topic-Specific Word Clouds</button>
-                <button class="tab-btn" id="wc-freq-tab" onclick="switchSubTab('wordclouds', 'wc-freq-panel', this)">Table 1: Term Frequency &amp; TF-IDF Ranking</button>
+                <button class="tab-btn active" id="wc-corpus-tab" onclick="switchSubTab('wordclouds', 'wc-corpus-panel', this)">Corpus Word Cloud (Title &amp; Abstract)</button>
+                <button class="tab-btn" id="wc-topics-tab" onclick="switchSubTab('wordclouds', 'wc-topics-panel', this)">Topic-Specific Word Clouds</button>
+                <button class="tab-btn" id="wc-freq-tab" onclick="switchSubTab('wordclouds', 'wc-freq-panel', this)">Term Frequency &amp; TF-IDF Ranking</button>
             </div>
 
             <!-- Panel 6A: Customizable Corpus Word Cloud -->
@@ -1050,7 +1050,7 @@
 
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">☁️ Figure 6A: High-Resolution Corpus Word Cloud</div>
+                        <div class="fig-title">☁️ High-Resolution Corpus Word Cloud</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-wc-main', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-wc-main">100%</span>
@@ -1065,21 +1065,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text" id="wcMainCaption">
-                            <strong>Figure 6A:</strong> Word cloud generated from combined <code>title</code> and <code>abstract</code> text across all documents in the collection. Font size reflects weighted corpus prominence.
+                            Word cloud generated from combined <code>title</code> and <code>abstract</code> text across all documents in the collection. Font size reflects weighted corpus prominence.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-wc-main', 'Figure_6A_Corpus_WordCloud.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-wc-main', 'Figure_6A_Corpus_WordCloud.pdf', 'Figure 6A: Corpus Word Cloud')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-wc-main', 'Corpus_WordCloud.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-wc-main', 'Corpus_WordCloud.pdf', 'Corpus Word Cloud')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Panel 6B: Multi-Panel Topic Word Clouds (Replicating Fig. 6 of Preprint) -->
+            <!-- Panel 6B: Multi-Panel Topic Word Clouds  -->
             <div id="wc-topics-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">🧩 Figure 6B (Fig. 6 in Preprint): Word Clouds per Discovered Research Topic</div>
+                        <div class="fig-title">🧩 Word Clouds per Discovered Research Topic</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-wc-topics', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-wc-topics">100%</span>
@@ -1094,21 +1094,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 6B (Replicating Fig. 6 in Abuella, 2024):</strong> Small-multiples panel of topic-specific word clouds extracted from each cluster's <code>title</code> and <code>abstract</code> corpus.
+                            Small-multiples panel of topic-specific word clouds extracted from each cluster's <code>title</code> and <code>abstract</code> corpus.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-wc-topics', 'Figure_6B_Topic_WordClouds.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-wc-topics', 'Figure_6B_Topic_WordClouds.pdf', 'Figure 6B: Word Clouds per Topic Cluster')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-wc-topics', 'Topic_WordClouds.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-wc-topics', 'Topic_WordClouds.pdf', 'Word Clouds per Topic Cluster')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Panel Table 1: Top Corpus Terms Table -->
+            <!-- Panel Top Corpus Terms Table -->
             <div id="wc-freq-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">📊 Table 1: Top 40 Extracted Keywords &amp; Terms (Title + Abstract Context)</div>
+                        <div class="fig-title">📊 Top 40 Extracted Keywords &amp; Terms (Title + Abstract Context)</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('tbl-wc-terms', -0.1)">−</button>
                             <span class="zoom-level" id="zoom-label-tbl-wc-terms">100%</span>
@@ -1135,11 +1135,11 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Table 1:</strong> Quantitative term frequency distribution underlying the Title &amp; Abstract Word Cloud after academic stopword filtering.
+                            Quantitative term frequency distribution underlying the Title &amp; Abstract Word Cloud after academic stopword filtering.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download txt-btn" onclick="downloadTableTXT('table-wc-terms', 'Table_1_Corpus_Term_Frequencies.txt')">⬇️ TXT</button>
-                            <button class="btn-download" onclick="downloadTableCSV('table-wc-terms', 'Table_1_Corpus_Term_Frequencies.csv')">⬇️ CSV</button>
+                            <button class="btn-download txt-btn" onclick="downloadTableTXT('table-wc-terms', 'Corpus_Term_Frequencies.txt')">⬇️ TXT</button>
+                            <button class="btn-download" onclick="downloadTableCSV('table-wc-terms', 'Corpus_Term_Frequencies.csv')">⬇️ CSV</button>
                         </div>
                     </div>
                 </div>
@@ -1151,16 +1151,16 @@
         <!-- ========================================================= -->
         <section id="view-bibliometrics" class="view-section">
             <div class="tab-bar">
-                <button class="tab-btn active" id="bib-year-tab" onclick="switchSubTab('bibliometrics', 'bib-year-panel', this)">Fig. 2: Publications per Year</button>
-                <button class="tab-btn" id="bib-type-tab" onclick="switchSubTab('bibliometrics', 'bib-type-panel', this)">Fig. 3: Publications per Document Type</button>
-                <button class="tab-btn" id="bib-venue-tab" onclick="switchSubTab('bibliometrics', 'bib-venue-panel', this)">Fig. 4: Top Journals &amp; Venues</button>
-                <button class="tab-btn" id="bib-author-tab" onclick="switchSubTab('bibliometrics', 'bib-author-panel', this)">Fig. 5: Top Authors &amp; Mendeley Tags</button>
+                <button class="tab-btn active" id="bib-year-tab" onclick="switchSubTab('bibliometrics', 'bib-year-panel', this)">Publications per Year</button>
+                <button class="tab-btn" id="bib-type-tab" onclick="switchSubTab('bibliometrics', 'bib-type-panel', this)">Publications per Document Type</button>
+                <button class="tab-btn" id="bib-venue-tab" onclick="switchSubTab('bibliometrics', 'bib-venue-panel', this)">Top Journals &amp; Venues</button>
+                <button class="tab-btn" id="bib-author-tab" onclick="switchSubTab('bibliometrics', 'bib-author-panel', this)">Top Authors &amp; Mendeley Tags</button>
             </div>
 
-            <!-- Fig 2: Publications per Year -->
+            <!-- Publications per Year -->
             <div id="bib-year-panel" class="sub-panel">
                 <div class="card" style="padding-bottom:12px;">
-                    <h3>Temporal Publication Distribution (Replicating Fig. 2 of Abuella, 2024)</h3>
+                    <h3>Temporal Publication Distribution (Replicating Abuella, 2024)</h3>
                     <div class="control-strip">
                         <label>Year Filter Mode:
                             <select id="yearFilterMode" onchange="renderPublicationsPerYear()">
@@ -1172,7 +1172,7 @@
                 </div>
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">📈 Figure 2: Publications per Year</div>
+                        <div class="fig-title">📈 Publications per Year</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-bib-year', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-bib-year">100%</span>
@@ -1187,21 +1187,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 2:</strong> Number of academic publications per year in the active Mendeley BibTeX collection, illustrating recent research acceleration.
+                            Number of academic publications per year in the active Mendeley BibTeX collection, illustrating recent research acceleration.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-year', 'Figure_2_Publications_Per_Year.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-year', 'Figure_2_Publications_Per_Year.pdf', 'Figure 2: Publications per Year')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-year', 'Publications_Per_Year.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-year', 'Publications_Per_Year.pdf', 'Publications per Year')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Fig 3: Publications per Document Type -->
+            <!-- Publications per Document Type -->
             <div id="bib-type-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">📚 Figure 3: Distribution by BibTeX Document Type</div>
+                        <div class="fig-title">📚 Distribution by BibTeX Document Type</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-bib-type', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-bib-type">100%</span>
@@ -1216,21 +1216,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 3:</strong> Breakdown of BibTeX entry types (<code>@article</code>, <code>@techreport</code>, <code>@misc</code>, <code>@book</code>, <code>@inproceedings</code>, etc.).
+                            Breakdown of BibTeX entry types (<code>@article</code>, <code>@techreport</code>, <code>@misc</code>, <code>@book</code>, <code>@inproceedings</code>, etc.).
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-type', 'Figure_3_Publications_Per_DocType.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-type', 'Figure_3_Publications_Per_DocType.pdf', 'Figure 3: Publications per Document Type')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-type', 'Publications_Per_DocType.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-type', 'Publications_Per_DocType.pdf', 'Publications per Document Type')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Fig 4: Top Journals / Venues -->
+            <!-- Top Journals / Venues -->
             <div id="bib-venue-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">🏛️ Figure 4: Top Journals, Publishers &amp; Publication Venues</div>
+                        <div class="fig-title">🏛️ Top Journals, Publishers &amp; Publication Venues</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-bib-venue', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-bib-venue">100%</span>
@@ -1245,21 +1245,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 4:</strong> Most frequent peer-reviewed journals, institutions, and conference venues across the BibTeX records.
+                            Most frequent peer-reviewed journals, institutions, and conference venues across the BibTeX records.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-venue', 'Figure_4_Top_Journals_Venues.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-venue', 'Figure_4_Top_Journals_Venues.pdf', 'Figure 4: Top Journals & Venues')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-venue', 'Top_Journals_Venues.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-venue', 'Top_Journals_Venues.pdf', 'Top Journals & Venues')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Fig 5: Top Authors & Mendeley Tags -->
+            <!-- Top Authors & Mendeley Tags -->
             <div id="bib-author-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">✍️ Figure 5A: Top Contributing Authors in Collection</div>
+                        <div class="fig-title">✍️ Top Contributing Authors in Collection</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-bib-author', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-bib-author">100%</span>
@@ -1274,18 +1274,18 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 5A:</strong> Authors with the highest publication frequency in the active Mendeley library.
+                            Authors with the highest publication frequency in the active Mendeley library.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-author', 'Figure_5A_Top_Authors.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-author', 'Figure_5A_Top_Authors.pdf', 'Figure 5A: Top Authors')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-author', 'Top_Authors.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-author', 'Top_Authors.pdf', 'Top Authors')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">🏷️ Figure 5B: Top Mendeley Tags &amp; Author Keywords</div>
+                        <div class="fig-title">🏷️ Top Mendeley Tags &amp; Author Keywords</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-bib-tags', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-bib-tags">100%</span>
@@ -1300,11 +1300,11 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 5B:</strong> Most frequent custom <code>mendeley-tags</code> and BibTeX <code>keywords</code> annotating the research corpus.
+                            Most frequent custom <code>mendeley-tags</code> and BibTeX <code>keywords</code> annotating the research corpus.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-tags', 'Figure_5B_Top_Mendeley_Tags.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-tags', 'Figure_5B_Top_Mendeley_Tags.pdf', 'Figure 5B: Top Mendeley Tags')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-tags', 'Top_Mendeley_Tags.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-tags', 'Top_Mendeley_Tags.pdf', 'Top Mendeley Tags')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
@@ -1316,16 +1316,16 @@
         <!-- ========================================================= -->
         <section id="view-topics" class="view-section">
             <div class="tab-bar">
-                <button class="tab-btn active" id="topic-map-tab" onclick="switchSubTab('topics', 'topic-map-panel', this)">Fig. 7: 2D Document-Topic Similarity Map</button>
-                <button class="tab-btn" id="topic-dist-tab" onclick="switchSubTab('topics', 'topic-dist-panel', this)">Fig. 8 &amp; 9: Topic Counts &amp; Yearly Evolution</button>
-                <button class="tab-btn" id="topic-table-tab" onclick="switchSubTab('topics', 'topic-table-panel', this)">Table 2: Topic Cluster Definitions</button>
+                <button class="tab-btn active" id="topic-map-tab" onclick="switchSubTab('topics', 'topic-map-panel', this)">2D Document-Topic Similarity Map</button>
+                <button class="tab-btn" id="topic-dist-tab" onclick="switchSubTab('topics', 'topic-dist-panel', this)">Topic Counts &amp; Yearly Evolution</button>
+                <button class="tab-btn" id="topic-table-tab" onclick="switchSubTab('topics', 'topic-table-panel', this)">Topic Cluster Definitions</button>
             </div>
 
-            <!-- Fig 7: 2D Document-Topic Map -->
+            <!-- 2D Document-Topic Map -->
             <div id="topic-map-panel" class="sub-panel">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">🧭 Figure 7 (Replicating Fig. 7 in Preprint): 2D Semantic Document-Topic Map</div>
+                        <div class="fig-title">🧭 2D Semantic Document-Topic Map</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-topic-map', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-topic-map">100%</span>
@@ -1340,21 +1340,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 7:</strong> 2D semantic projection of documents based on TF-IDF Title &amp; Abstract similarity, colored by dominant research topic. Hover over any point to inspect document metadata.
+                            2D semantic projection of documents based on TF-IDF Title &amp; Abstract similarity, colored by dominant research topic. Hover over any point to inspect document metadata.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-map', 'Figure_7_Document_Topic_Map.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-map', 'Figure_7_Document_Topic_Map.pdf', 'Figure 7: 2D Document-Topic Map')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-map', 'Document_Topic_Map.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-map', 'Document_Topic_Map.pdf', '2D Document-Topic Map')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Fig 8 & Fig 9: Publications per Topic & Evolution Over Years -->
+            <!-- Publications per Topic & Evolution Over Years -->
             <div id="topic-dist-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">📊 Figure 8: Number of Publications per Discovered Topic</div>
+                        <div class="fig-title">📊 Number of Publications per Discovered Topic</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-topic-bar', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-topic-bar">100%</span>
@@ -1369,18 +1369,18 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 8 (Replicating Fig. 8 in Preprint):</strong> Total document count assigned to each thematic topic cluster.
+                            Total document count assigned to each thematic topic cluster.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-bar', 'Figure_8_Publications_Per_Topic.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-bar', 'Figure_8_Publications_Per_Topic.pdf', 'Figure 8: Publications per Topic')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-bar', 'Publications_Per_Topic.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-bar', 'Publications_Per_Topic.pdf', 'Publications per Topic')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">📉 Figure 9: Topic Evolution Over Years (2010 – 2026)</div>
+                        <div class="fig-title">📉 Topic Evolution Over Years (2010 – 2026)</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('fig-topic-evol', -0.15)">−</button>
                             <span class="zoom-level" id="zoom-label-fig-topic-evol">100%</span>
@@ -1395,21 +1395,21 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Figure 9 (Replicating Fig. 9 in Preprint):</strong> Stacked temporal evolution of research topics across recent publication years, showing the surge in Maritime/AIS routing, Physics-Informed ML, and Hydrogen/Energy Systems.
+                            Stacked temporal evolution of research topics across recent publication years, showing the surge in Maritime/AIS routing, Physics-Informed ML, and Hydrogen/Energy Systems.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-evol', 'Figure_9_Topic_Evolution_Over_Years.png')">⬇️ PNG</button>
-                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-evol', 'Figure_9_Topic_Evolution_Over_Years.pdf', 'Figure 9: Topic Evolution Over Years')">⬇️ PDF</button>
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-evol', 'Topic_Evolution_Over_Years.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-evol', 'Topic_Evolution_Over_Years.pdf', 'Topic Evolution Over Years')">⬇️ PDF</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Table 2: Topic Cluster Definitions -->
+            <!-- Topic Cluster Definitions -->
             <div id="topic-table-panel" class="sub-panel" style="display:none;">
                 <div class="figure-container">
                     <div class="figure-toolbar">
-                        <div class="fig-title">📑 Table 2: Topic Modeling Cluster Summary &amp; Representative Titles</div>
+                        <div class="fig-title">📑 Topic Modeling Cluster Summary &amp; Representative Titles</div>
                         <div class="zoom-controls">
                             <button class="zoom-btn" onclick="zoomTarget('tbl-topic-defs', -0.1)">−</button>
                             <span class="zoom-level" id="zoom-label-tbl-topic-defs">100%</span>
@@ -1435,11 +1435,11 @@
                     </div>
                     <div class="figure-caption">
                         <div class="caption-text">
-                            <strong>Table 2:</strong> Automated topic modeling summary showing anchor keywords and representative papers from each cluster.
+                            Automated topic modeling summary showing anchor keywords and representative papers from each cluster.
                         </div>
                         <div class="download-group">
-                            <button class="btn-download txt-btn" onclick="downloadTableTXT('table-topic-defs', 'Table_2_Topic_Cluster_Summary.txt')">⬇️ TXT</button>
-                            <button class="btn-download" onclick="downloadTableCSV('table-topic-defs', 'Table_2_Topic_Cluster_Summary.csv')">⬇️ CSV</button>
+                            <button class="btn-download txt-btn" onclick="downloadTableTXT('table-topic-defs', 'Topic_Cluster_Summary.txt')">⬇️ TXT</button>
+                            <button class="btn-download" onclick="downloadTableCSV('table-topic-defs', 'Topic_Cluster_Summary.csv')">⬇️ CSV</button>
                         </div>
                     </div>
                 </div>
@@ -1477,7 +1477,7 @@
 
             <div class="figure-container">
                 <div class="figure-toolbar">
-                    <div class="fig-title">🗂️ Table 3: Complete Parsed Mendeley BibTeX Literature Table</div>
+                    <div class="fig-title">🗂️ Complete Parsed Mendeley BibTeX Literature Table</div>
                     <div class="zoom-controls">
                         <button class="zoom-btn" onclick="zoomTarget('tbl-explorer', -0.1)">−</button>
                         <span class="zoom-level" id="zoom-label-tbl-explorer">100%</span>
@@ -1506,7 +1506,7 @@
                 </div>
                 <div class="figure-caption">
                     <div class="caption-text">
-                        <strong>Table 3:</strong> Full metadata table extracted from the active <code>.bib</code> file. Export filtered or complete rows as formatted plain-text (<code>.txt</code>) or spreadsheet (<code>.csv</code>).
+                        Full metadata table extracted from the active <code>.bib</code> file. Export filtered or complete rows as formatted plain-text (<code>.txt</code>) or spreadsheet (<code>.csv</code>).
                     </div>
                     <div class="download-group">
                         <button class="btn-download txt-btn" onclick="downloadTableTXT('table-explorer', 'Mendeley_BibTeX_Documents.txt')">⬇️ TXT</button>
@@ -2075,7 +2075,7 @@
                 tags_keywords: 'Mendeley Tags & Author Keywords'
             };
             document.getElementById('wcMainCaption').innerHTML =
-                `<strong>Figure 6A:</strong> Word cloud generated from <em>${labelMap[source]}</em> (top ${words.length} weighted terms across ${parsedDocs.length} documents).`;
+                `Word cloud generated from <em>${labelMap[source]}</em> (top ${words.length} weighted terms across ${parsedDocs.length} documents).`;
         }
 
         function renderTopicWordCloudsGrid() {
@@ -2185,7 +2185,7 @@
             const values = fullYears.map(y => yearCounts.get(y) || 0);
             const maxVal = Math.max(...values, 1);
 
-            drawChartHeader(ctx, W, 'Publications per Year (Fig. 2 - Outlier-Resistant)', `Distribution of references across ${minY}–${maxY} (IQR fenced)`);
+            drawChartHeader(ctx, W, 'Publications per Year (Outlier-Resistant)', `Distribution of references across ${minY}–${maxY} (IQR fenced)`);
 
             const margin = { top: 82, right: 36, bottom: 64, left: 68 };
             const plotW = W - margin.left - margin.right;
@@ -2263,7 +2263,7 @@
             const sorted = Array.from(typeCounts.entries()).sort((a, b) => b[1] - a[1]);
             const maxVal = Math.max(...sorted.map(s => s[1]), 1);
 
-            drawChartHeader(ctx, W, 'Publications per BibTeX Document Type (Fig. 3)', 'Breakdown of reference formats across the Mendeley collection');
+            drawChartHeader(ctx, W, 'Publications per BibTeX Document Type', 'Breakdown of reference formats across the Mendeley collection');
 
             const margin = { top: 82, right: 40, bottom: 64, left: 72 };
             const plotW = W - margin.left - margin.right;
@@ -2400,7 +2400,7 @@
 
             drawHorizontalBarChart(
                 'canvas-bib-venue',
-                'Top 12 Journals, Publishers & Venues (Fig. 4)',
+                'Top 12 Journals, Publishers & Venues',
                 'Most frequent publication outlets across the Mendeley collection',
                 top12,
                 '#1d4ed8'
@@ -2423,7 +2423,7 @@
 
             drawHorizontalBarChart(
                 'canvas-bib-author',
-                'Top 12 Authors by Document Count (Fig. 5A)',
+                'Top 12 Authors by Document Count',
                 'Most frequently occurring authors in the active BibTeX collection',
                 topAuthors,
                 '#0f766e'
@@ -2443,7 +2443,7 @@
 
             drawHorizontalBarChart(
                 'canvas-bib-tags',
-                'Top 12 Mendeley Tags & Keywords (Fig. 5B)',
+                'Top 12 Mendeley Tags & Keywords',
                 'Dominant thematic tags annotating the reference collection',
                 topTags,
                 '#6d28d9'
@@ -2464,7 +2464,7 @@
                 return;
             }
 
-            drawChartHeader(ctx, W, '2D Semantic Document-Topic Map (Fig. 7)', 'TF-IDF Title & Abstract similarity projection colored by discovered topic cluster');
+            drawChartHeader(ctx, W, '2D Semantic Document-Topic Map', 'TF-IDF Title & Abstract similarity projection colored by discovered topic cluster');
 
             const margin = { top: 82, right: 270, bottom: 48, left: 60 };
             const plotW = W - margin.left - margin.right;
@@ -2543,7 +2543,7 @@
                 return;
             }
 
-            drawChartHeader(ctxB, WB, 'Publications per Discovered Topic Cluster (Fig. 8)', 'Document distribution across the 6 automated research themes');
+            drawChartHeader(ctxB, WB, 'Publications per Discovered Topic Cluster', 'Document distribution across the 6 automated research themes');
 
             const marginB = { top: 80, right: 36, bottom: 68, left: 68 };
             const plotWB = WB - marginB.left - marginB.right;
@@ -2597,13 +2597,13 @@
             ctxB.lineTo(marginB.left + plotWB, marginB.top + plotHB);
             ctxB.stroke();
 
-            // Fig 9: Topic Evolution
+            // Topic Evolution
             const canvasEv = document.getElementById('canvas-topic-evol');
             const ctxE = canvasEv.getContext('2d');
             const WE = canvasEv.width;
             const HE = canvasEv.height;
 
-            drawChartHeader(ctxE, WE, 'Topic Evolution Over Years (Fig. 9)', 'Temporal emergence of research themes across recent publication years');
+            drawChartHeader(ctxE, WE, 'Topic Evolution Over Years', 'Temporal emergence of research themes across recent publication years');
 
             const yearStats = computeOutlierResistantYearStats(parsedDocs);
             const yearsSet = new Set();
@@ -2887,15 +2887,15 @@
             },
             wordclouds: {
                 title: 'Word Clouds: Title, Abstract & Research Topics',
-                sub: 'High-resolution corpus word clouds and term frequency rankings (Replicating Fig. 6)'
+                sub: 'High-resolution corpus word clouds and term frequency rankings (Replicating Abuella, 2024)'
             },
             bibliometrics: {
                 title: 'Bibliometric Distributions & Venue Analysis',
-                sub: 'Publications per year, document types, top journals, authors & Mendeley tags (Replicating Figs. 2–5)'
+                sub: 'Publications per year, document types, top journals, authors & Mendeley tags (Replicating Abuella, 2024)'
             },
             topics: {
                 title: 'Topic Modeling, Semantic Map & Temporal Evolution',
-                sub: '2D TF-IDF document-topic map, topic frequencies & yearly evolution (Replicating Figs. 7–9)'
+                sub: '2D TF-IDF document-topic map, topic frequencies & yearly evolution (Replicating Abuella, 2024)'
             },
             explorer: {
                 title: 'Interactive BibTeX Document Explorer',
