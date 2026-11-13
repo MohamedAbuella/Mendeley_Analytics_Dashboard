@@ -6,7 +6,7 @@ Inspired by the workflow described in *“Automating Academic Document Analysis 
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 * **Zero-Setup Client-Side Execution:** Runs entirely in your browser using pure HTML5, CSS, and JavaScript. No backend server or complex Python environment required.
 * **Automated BibTeX Parsing:** Robustly parses `@article`, `@techreport`, `@misc`, `@book`, and `@inproceedings` entries (handling braces and LaTeX character accents)[cite: 11].
@@ -24,10 +24,10 @@ Inspired by the workflow described in *“Automating Academic Document Analysis 
 
 1. Download or clone this repository.
 2. Open `index.html` directly in any modern web browser (Chrome, Firefox, Edge, Safari).
-3. Click **"📂 Upload .bib File"** in the sidebar to load your Mendeley library export and instantly explore the interactive analytics[cite: 11].
+3. Click **" Upload .bib File"** in the sidebar to load your Mendeley library export and instantly explore the interactive analytics[cite: 11].
 
 ---
 
-## 📄 License
+## License
 
 This project is open-source and available under the [MIT License](LICENSE).
