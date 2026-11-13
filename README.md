@@ -1,5 +1,7 @@
 # Mendeley-Analytics Dashboard
 
+[![Live Dashboard Preview](https://img.shields.io/badge/📊_Explore_Interactive_Dashboard-Click_Here-blue?style=for-the-badge)](https://MohamedAbuella.github.io/Mendeley_Analytics_Dashboard/)
+
 A browser-based, client-side academic document analysis dashboard that parses standard Mendeley-exported `.bib` files, performs NLP text processing and topic clustering, and generates publication-grade bibliometric visualizations[cite: 11]. 
 
 Inspired by the workflow described in *“Automating Academic Document Analysis with ChatGPT: A Mendeley Case”* (Mohamed Abuella, 2024)[cite: 11].
