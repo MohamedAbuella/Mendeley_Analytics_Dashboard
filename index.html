@@ -793,13 +793,12 @@
             </div>
             <div style="font-size:0.74rem; color:#334155;" id="activeBibSummary">0 entries • Upload a .bib file to begin</div>
             <div class="bib-actions">
-                <label class="btn-upload" for="bibFileInput">
-                    <span>📂 Upload .bib File</span>
-                </label>
+                <button class="btn-upload" id="browseFolderBtn" style="border:none; cursor:pointer;" title="Browse the .bib files in this dashboard's folder / GitHub repository">📂 Browse folder (.bib)</button>
                 <input type="file" id="bibFileInput" accept=".bib,.txt" style="display:none;">
                 <button class="btn-reset-bib" id="resetBibBtn" title="Clear dataset">Clear</button>
                 <button class="btn-upload" id="folderBtn" style="display:none; border:none; cursor:pointer;" title="Grant access to this dashboard's folder so the .bib file is loaded automatically">📁 Connect folder</button>
             </div>
+            <div id="bibPicker" style="display:none; margin-top:8px; background:#fff; border:1px solid #bfdbfe; border-radius:6px; padding:6px; font-size:0.74rem;"></div>
         </div>
 
 
@@ -3289,6 +3288,92 @@
             }
         }
 
+
+        /* ===================== BROWSE THE FOLDER / REPO FOR .bib FILES ===================== */
+        function githubRepoUrl() {
+            if (!/\.github\.io$/i.test(location.hostname)) return null;
+            const user = location.hostname.split('.')[0];
+            const parts = location.pathname.split('/').filter(Boolean);
+            if (parts.length && /\.html?$/i.test(parts[parts.length - 1])) parts.pop();
+            return `https://github.com/${user}/${parts.length ? parts[0] : location.hostname}`;
+        }
+
+        async function listAllBibNamesHttp() {
+            let names = [];
+            for (const strat of [bibNamesFromDirectoryListing, bibNamesFromGitHub]) {
+                try { names = await strat(); if (names.length) break; } catch (e) {}
+            }
+            if (!names.length) { const g = await guessBibByName(); if (g) names = [g]; }
+            return [...new Set(names)].filter(n => /\.bib$/i.test(n))
+                .sort((a, b) => (pickBestBib([a, b]) === a ? -1 : 1));
+        }
+
+        function renderBibPicker(names, loader) {
+            const box = document.getElementById('bibPicker');
+            box.style.display = 'block';
+            box.innerHTML = '';
+            const head = document.createElement('div');
+            head.style.cssText = 'font-weight:700; color:#1e40af; margin-bottom:4px;';
+            head.textContent = names.length ? 'Select a .bib file from the folder:' : 'No .bib file found in the folder.';
+            box.appendChild(head);
+            names.forEach(n => {
+                const b = document.createElement('button');
+                b.className = 'btn-reset-bib';
+                b.style.cssText = 'display:block; width:100%; text-align:left; margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' + (n === currentBibFilename ? 'background:#dbeafe;' : '');
+                b.textContent = '📄 ' + n;
+                b.title = n;
+                b.onclick = async () => { try { await loader(n); box.style.display = 'none'; } catch (e) { setBibStatus('Could not load ' + n); } };
+                box.appendChild(b);
+            });
+            const extra = document.createElement('div');
+            extra.style.cssText = 'margin-top:4px; display:flex; gap:10px; flex-wrap:wrap;';
+            const repo = githubRepoUrl();
+            if (repo) {
+                const a = document.createElement('a');
+                a.href = repo; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open GitHub repo ↗';
+                a.style.cssText = 'color:#1d4ed8; font-weight:600; text-decoration:none;';
+                extra.appendChild(a);
+            }
+            const up = document.createElement('a');
+            up.href = '#'; up.textContent = 'Upload from computer…';
+            up.style.cssText = 'color:#64748b; text-decoration:none;';
+            up.onclick = ev => { ev.preventDefault(); document.getElementById('bibFileInput').click(); };
+            extra.appendChild(up);
+            box.appendChild(extra);
+        }
+
+        async function browseFolder() {
+            const btn = document.getElementById('browseFolderBtn');
+            const label = btn.textContent;
+            try {
+                if (IS_LOCAL_FILE) {
+                    // Local: open the folder picker directly at the dashboard's folder, then list its .bib files
+                    if (!window.showDirectoryPicker) { document.getElementById('bibFileInput').click(); return; }
+                    let dir = await loadHandle();
+                    if (dir) { try { if ((await dir.requestPermission({ mode: 'read' })) !== 'granted') dir = null; } catch (e) { dir = null; } }
+                    if (!dir) dir = await window.showDirectoryPicker({ id: 'mendeley-dashboard', mode: 'read' });
+                    await saveHandle(dir);
+                    const names = [];
+                    for await (const [name, h] of dir.entries()) if (h.kind === 'file' && /\.bib$/i.test(name)) names.push(name);
+                    names.sort((a, b) => (pickBestBib([a, b]) === a ? -1 : 1));
+                    renderBibPicker(names, async n => {
+                        const f = await (await dir.getFileHandle(n)).getFile();
+                        runFullPipeline(await f.text(), n);
+                    });
+                } else {
+                    btn.textContent = '⏳ Looking in folder…';
+                    const names = await listAllBibNamesHttp();
+                    renderBibPicker(names, async n => {
+                        const res = await fetch(encodeURI(n), { cache: 'no-store' });
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        runFullPipeline(await res.text(), n);
+                    });
+                }
+            } catch (e) {
+                if (e.name !== 'AbortError') setBibStatus('Could not browse folder: ' + e.message);
+            } finally { btn.textContent = label; }
+        }
+
         function autoLoadBibFromFolder() {
             setBibStatus('Looking for a .bib file in the folder…');
             return IS_LOCAL_FILE ? autoLoadViaFolderHandle() : autoLoadViaHttp();
@@ -3306,6 +3391,9 @@
                 reader.onload = function (evt) { runFullPipeline(evt.target.result, file.name); };
                 reader.readAsText(file);
             });
+
+            // 2b. Browse the folder / repo for .bib files
+            document.getElementById('browseFolderBtn').addEventListener('click', browseFolder);
 
             // 3. Clear button
             document.getElementById('resetBibBtn').addEventListener('click', function () {
