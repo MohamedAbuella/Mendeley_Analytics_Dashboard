@@ -1,0 +1,3155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mendeley-Analytics: Academic Document Analysis Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- jsPDF for reliable vector/high-DPI PDF export with native fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --accent: #2563eb;
+            --bg-app: #f1f5f9;
+            --bg-sidebar: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border-color: #cbd5e1;
+            --hover-bg: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ================= SIDEBAR NAVIGATION ================= */
+        .sidebar {
+            width: 325px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.25s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #ffffff;
+        }
+
+        .sidebar-header .badge {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.18);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.08rem;
+            font-weight: 700;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+        }
+
+        .sidebar-header p {
+            font-size: 0.78rem;
+            opacity: 0.9;
+            margin-top: 6px;
+            line-height: 1.35;
+        }
+
+        /* BibTeX Input Loader Box in Sidebar */
+        .bib-input-panel {
+            padding: 14px 16px;
+            background: #eff6ff;
+            border-bottom: 1px solid #bfdbfe;
+        }
+
+        .bib-input-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bib-status-pill {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 0.68rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-weight: 600;
+            max-width: 170px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bib-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-upload {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-upload:hover {
+            background: var(--accent);
+        }
+
+
+        .btn-reset-bib {
+            background: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 7px 9px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-reset-bib:hover {
+            background: #e2e8f0;
+        }
+
+        .nav-section {
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .nav-section-header {
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 13px 18px;
+            text-align: left;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .nav-section-header:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .nav-section-header.active {
+            color: var(--primary);
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+        }
+
+        .nav-section-header .chevron {
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+            color: var(--text-muted);
+        }
+
+        .nav-section-header.expanded .chevron {
+            transform: rotate(90deg);
+        }
+
+        .nav-sublist {
+            display: none;
+            background-color: #ffffff;
+            padding: 4px 0 8px;
+        }
+
+        .nav-sublist.open {
+            display: block;
+        }
+
+        .nav-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 8px 18px 8px 32px;
+            font-size: 0.80rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+            line-height: 1.35;
+        }
+
+        .nav-item:hover {
+            color: var(--primary);
+            background-color: #f8fafc;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: 600;
+            background-color: #eff6ff;
+        }
+
+        /* ================= MAIN CONTENT AREA ================= */
+        .main-content {
+            margin-left: 325px;
+            flex: 1;
+            padding: 26px 32px;
+            max-width: calc(100vw - 325px);
+        }
+
+        .top-breadcrumb {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .top-breadcrumb h2 {
+            font-size: 1.42rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .top-breadcrumb .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .paper-badge {
+            background: #e0e7ff;
+            color: #1e3a8a;
+            border: 1px solid #c7d2fe;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        /* ================= KPI CARDS ================= */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 20px;
+            box-shadow: var(--shadow-sm);
+            border-top: 4px solid var(--primary);
+        }
+
+        .kpi-card.accent-green { border-top-color: #059669; }
+        .kpi-card.accent-amber { border-top-color: #d97706; }
+        .kpi-card.accent-indigo { border-top-color: #4f46e5; }
+
+        .kpi-card .kpi-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .kpi-card .kpi-value {
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 6px 0;
+            line-height: 1.2;
+        }
+
+        .kpi-card.accent-green .kpi-value { color: #059669; }
+        .kpi-card.accent-amber .kpi-value { color: #b45309; }
+        .kpi-card.accent-indigo .kpi-value { color: #4338ca; }
+
+        .kpi-card .kpi-sub {
+            font-size: 0.79rem;
+            color: var(--text-muted);
+        }
+
+        /* ================= VIEW CONTAINERS & TABS ================= */
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.83rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .tab-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ================= CARDS & CONTENT BLOCKS ================= */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 22px;
+        }
+
+        .card h3 {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card p {
+            font-size: 0.90rem;
+            line-height: 1.62;
+            color: #334155;
+            margin-bottom: 12px;
+        }
+
+        .pipeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .pipeline-step {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+
+        .pipeline-step .step-num {
+            font-size: 0.70rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pipeline-step .step-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 3px 0;
+        }
+
+        .pipeline-step .step-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* ================= CONTROLS STRIP INSIDE CARDS ================= */
+        .control-strip {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            font-size: 0.82rem;
+        }
+
+        .control-strip label {
+            font-weight: 600;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-strip select,
+        .control-strip input[type="text"],
+        .control-strip input[type="number"] {
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 5px 9px;
+            font-size: 0.81rem;
+            background: #ffffff;
+            color: var(--text-main);
+        }
+
+        .control-strip input[type="range"] {
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* ================= FIGURE VIEWER & ZOOM TOOLBAR ================= */
+        .figure-container {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #ffffff;
+            overflow: hidden;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .figure-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 9px 16px;
+            font-size: 0.82rem;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .figure-toolbar .fig-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .zoom-btn {
+            background: #334155;
+            color: #ffffff;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            padding: 3px 10px;
+            font-size: 0.80rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .zoom-btn:hover {
+            background: #475569;
+        }
+
+        .zoom-level {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            min-width: 46px;
+            text-align: center;
+            color: #e2e8f0;
+        }
+
+        .figure-viewport {
+            width: 100%;
+            max-height: 680px;
+            overflow: auto;
+            background: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 18px;
+            position: relative;
+        }
+
+        .figure-zoom-wrapper {
+            transform-origin: top center;
+            transition: transform 0.15s ease;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .figure-viewport canvas {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .figure-caption {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 12px 16px;
+            font-size: 0.83rem;
+            color: #334155;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .caption-text {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .download-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+
+        .btn-download:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            transform: translateY(-1px);
+        }
+
+        .btn-download.pdf-btn {
+            background: #fef2f2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .btn-download.pdf-btn:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
+
+        .btn-download.txt-btn {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .btn-download.txt-btn:hover {
+            background: #dcfce7;
+            border-color: #86efac;
+        }
+
+        /* ================= INTERACTIVE TABLES ================= */
+        .table-viewport {
+            width: 100%;
+            max-height: 620px;
+            overflow: auto;
+            background: #ffffff;
+        }
+
+        .table-zoom-wrapper {
+            transform-origin: top left;
+            transition: transform 0.15s ease;
+            width: 100%;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        table.data-table th {
+            background-color: #1e3a8a;
+            color: #ffffff;
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        table.data-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: top;
+            line-height: 1.42;
+        }
+
+        table.data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        table.data-table tr:hover {
+            background-color: #eff6ff;
+        }
+
+        .tag-pill {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            font-size: 0.71rem;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 4px;
+            margin: 1px 2px;
+        }
+
+        .type-pill {
+            display: inline-block;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Tooltip for interactive scatter plot */
+        #scatterTooltip {
+            position: fixed;
+            pointer-events: none;
+            background: rgba(15, 23, 42, 0.96);
+            color: #f8fafc;
+            padding: 10px 13px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            max-width: 340px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            z-index: 9999;
+            display: none;
+            line-height: 1.42;
+            border: 1px solid #334155;
+        }
+
+        /* Toast notification */
+        #toastNotification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.25s ease;
+            pointer-events: none;
+        }
+
+        #toastNotification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile menu toggle */
+        .mobile-nav-toggle {
+            display: none;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @media (max-width: 960px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                max-width: 100vw;
+                padding: 16px;
+            }
+            .mobile-nav-toggle {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= SIDEBAR NAVIGATION ================= -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="badge">Mendeley-Analytics • BibTeX Engine</div>
+            <h1>Academic Document Analysis Dashboard</h1>
+            <p>Replicating Abuella (2024) Bibliometric, Word Cloud &amp; Topic Modeling Pipeline in Browser</p>
+        </div>
+
+        <!-- BibTeX Dynamic Input Panel -->
+        <div class="bib-input-panel">
+            <div class="bib-input-label">
+                <span>Active .bib Dataset</span>
+                <span class="bib-status-pill" id="activeBibName" title="None">None (Upload .bib)</span>
+            </div>
+            <div style="font-size:0.74rem; color:#334155;" id="activeBibSummary">0 entries • Upload a .bib file to begin</div>
+            <div class="bib-actions">
+                <label class="btn-upload" for="bibFileInput">
+                    <span>📂 Upload .bib File</span>
+                </label>
+                <input type="file" id="bibFileInput" accept=".bib,.txt" style="display:none;">
+                <button class="btn-reset-bib" id="resetBibBtn" title="Clear dataset">Clear</button>
+            </div>
+        </div>
+
+
+        <!-- Navigation Menu -->
+        <nav id="sidebarNav">
+            <!-- Section 0: Overview -->
+            <div class="nav-section">
+                <button class="nav-section-header active" onclick="switchView('overview', this)">
+                    <span>0. Executive Summary &amp; Overview</span>
+                </button>
+            </div>
+
+            <!-- Section 1: Word Clouds -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                    <span>1. Word Clouds (Title, Abstract &amp; Topics)</span>
+                    <span class="chevron">▶</span>
+                </button>
+                <div class="nav-sublist">
+                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-corpus-tab')">Fig. 6A: Title &amp; Abstract Word Cloud</button>
+                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-topics-tab')">Fig. 6B: Topic Cluster Word Clouds</button>
+                    <button class="nav-item" onclick="switchView('wordclouds', this, 'wc-freq-tab')">Table 1: Top Corpus Terms &amp; Frequencies</button>
+                </div>
+            </div>
+
+            <!-- Section 2: Bibliometric Visualizations -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                    <span>2. Bibliometric Distributions (Figs. 2–5)</span>
+                    <span class="chevron">▶</span>
+                </button>
+                <div class="nav-sublist">
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-year-tab')">Fig. 2: Publications per Year</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-type-tab')">Fig. 3: Publications per Document Type</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-venue-tab')">Fig. 4: Top Journals &amp; Venues</button>
+                    <button class="nav-item" onclick="switchView('bibliometrics', this, 'bib-author-tab')">Fig. 5: Top Authors &amp; Mendeley Tags</button>
+                </div>
+            </div>
+
+            <!-- Section 3: Topic Modeling & Evolution -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="toggleAccordion(this)" aria-expanded="false">
+                    <span>3. Topic Modeling &amp; Evolution (Figs. 7–9)</span>
+                    <span class="chevron">▶</span>
+                </button>
+                <div class="nav-sublist">
+                    <button class="nav-item" onclick="switchView('topics', this, 'topic-map-tab')">Fig. 7: 2D Document-Topic Similarity Map</button>
+                    <button class="nav-item" onclick="switchView('topics', this, 'topic-dist-tab')">Fig. 8 &amp; 9: Topic Counts &amp; Yearly Evolution</button>
+                    <button class="nav-item" onclick="switchView('topics', this, 'topic-table-tab')">Table 2: Discovered Topic Cluster Summary</button>
+                </div>
+            </div>
+
+            <!-- Section 4: Document Explorer -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="switchView('explorer', this)">
+                    <span>4. Interactive BibTeX Document Explorer</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <main class="main-content">
+        <div class="top-breadcrumb">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('mobile-open')">☰ Menu</button>
+                <div>
+                    <h2 id="viewTitle">Executive Summary &amp; Overview</h2>
+                    <div class="subtitle" id="viewSubtitle">Automated bibliometric &amp; NLP analysis of Mendeley BibTeX metadata (Abuella, 2024 methodology)</div>
+                </div>
+            </div>
+            <div class="paper-badge" id="datasetBadge">Dataset: None (Upload .bib)</div>
+        </div>
+
+        <!-- KPI Summary Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total BibTeX Entries</div>
+                <div class="kpi-value" id="kpiTotalDocs">0</div>
+                <div class="kpi-sub" id="kpiTotalDocsSub">Upload .bib to analyze</div>
+            </div>
+            <div class="kpi-card accent-green">
+                <div class="kpi-label">Publication Year Span</div>
+                <div class="kpi-value" id="kpiYearSpan">—</div>
+                <div class="kpi-sub" id="kpiYearSub">Upload .bib to analyze</div>
+            </div>
+            <div class="kpi-card accent-indigo">
+                <div class="kpi-label">Dominant Document Type</div>
+                <div class="kpi-value" id="kpiDocType">—</div>
+                <div class="kpi-sub" id="kpiDocTypeSub">Upload .bib to analyze</div>
+            </div>
+            <div class="kpi-card accent-amber">
+                <div class="kpi-label">Top Theme / Mendeley Tag</div>
+                <div class="kpi-value" id="kpiTopTheme" style="font-size:1.25rem; padding-top:4px;">—</div>
+                <div class="kpi-sub" id="kpiTopThemeSub">Upload .bib to analyze</div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 0: EXECUTIVE SUMMARY & OVERVIEW                      -->
+        <!-- ========================================================= -->
+        <section id="view-overview" class="view-section active">
+            <div class="card">
+                <h3>Methodology &amp; Automated Analysis Pipeline (Fig. 1 of Abuella, 2024)</h3>
+                <p>
+                    This interactive dashboard implements the end-to-end automated academic literature review workflow described in <em>"Automating Academic Document Analysis with ChatGPT: A Mendeley Case"</em> (Mohamed Abuella, 2024). Directly inside your browser, it parses standard Mendeley-exported <code>.bib</code> files, extracts structured bibliometric fields (<code>title</code>, <code>abstract</code>, <code>author</code>, <code>year</code>, <code>journal</code>, <code>mendeley-tags</code>, <code>keywords</code>), computes TF-IDF weighted n-gram vectors, clusters documents into latent research themes, and renders publication-grade figures and tables with high-DPI PNG, vector PDF, and plain-text TXT exports.
+                </p>
+                <div class="pipeline-grid">
+                    <div class="pipeline-step">
+                        <div class="step-num">Stage 1</div>
+                        <div class="step-title">BibTeX Ingestion</div>
+                        <div class="step-desc">Parses <code>@article</code>, <code>@techreport</code>, <code>@misc</code>, <code>@book</code>, <code>@inproceedings</code>, braces &amp; LaTeX accents.</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-num">Stage 2</div>
+                        <div class="step-title">NLP Text Cleaning</div>
+                        <div class="step-desc">Tokenizes <code>title</code> + <code>abstract</code>, strips academic stopwords, normalizes domain terms.</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-num">Stage 3</div>
+                        <div class="step-title">Bibliometric Profiling</div>
+                        <div class="step-desc">Computes yearly growth, venue concentration, author productivity, and Mendeley tag frequencies.</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-num">Stage 4</div>
+                        <div class="step-title">Word Clouds &amp; Topics</div>
+                        <div class="step-desc">Generates high-density Title/Abstract word clouds and 6-cluster TF-IDF cosine topic assignments.</div>
+                    </div>
+                    <div class="pipeline-step">
+                        <div class="step-num">Stage 5</div>
+                        <div class="step-title">Interactive Export</div>
+                        <div class="step-desc">Zoomable canvases &amp; tables with instant ⬇️ PNG, ⬇️ PDF, ⬇️ TXT, and ⬇️ CSV downloads.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Overview Figure: Corpus Title & Abstract Word Cloud -->
+            <div class="figure-container" id="fig-overview-wc-container">
+                <div class="figure-toolbar">
+                    <div class="fig-title">☁️ Featured Overview Figure: Title &amp; Abstract Word Cloud (Combined Text Context)</div>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomTarget('fig-overview-wc', -0.15)">−</button>
+                        <span class="zoom-level" id="zoom-label-fig-overview-wc">100%</span>
+                        <button class="zoom-btn" onclick="zoomTarget('fig-overview-wc', 0.15)">+</button>
+                        <button class="zoom-btn" onclick="resetZoom('fig-overview-wc')">Reset</button>
+                    </div>
+                </div>
+                <div class="figure-viewport">
+                    <div class="figure-zoom-wrapper" id="zoom-wrap-fig-overview-wc">
+                        <canvas id="canvas-overview-wc" width="1100" height="470"></canvas>
+                    </div>
+                </div>
+                <div class="figure-caption">
+                    <div class="caption-text">
+                        <strong>Overview Word Cloud:</strong> Most prominent terms extracted from combined <code>title</code> and <code>abstract</code> text across all entries in the active <code>.bib</code> collection (weighted by TF-IDF &amp; corpus frequency).
+                    </div>
+                    <div class="download-group">
+                        <button class="btn-download" onclick="downloadCanvasPNG('canvas-overview-wc', 'Overview_Title_Abstract_WordCloud.png')">⬇️ PNG</button>
+                        <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-overview-wc', 'Overview_Title_Abstract_WordCloud.pdf', 'Title & Abstract Corpus Word Cloud')">⬇️ PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Overview Table: Corpus Breakdown by Document Type & Topic -->
+            <div class="figure-container">
+                <div class="figure-toolbar">
+                    <div class="fig-title">📋 Executive Summary Table: Collection Composition &amp; Research Themes</div>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomTarget('tbl-overview-summary', -0.1)">−</button>
+                        <span class="zoom-level" id="zoom-label-tbl-overview-summary">100%</span>
+                        <button class="zoom-btn" onclick="zoomTarget('tbl-overview-summary', 0.1)">+</button>
+                        <button class="zoom-btn" onclick="resetZoom('tbl-overview-summary')">Reset</button>
+                    </div>
+                </div>
+                <div class="table-viewport">
+                    <div class="table-zoom-wrapper" id="zoom-wrap-tbl-overview-summary">
+                        <table class="data-table" id="table-overview-summary">
+                            <thead>
+                                <tr>
+                                    <th>Research Cluster / Category</th>
+                                    <th>Doc Count</th>
+                                    <th>Share (%)</th>
+                                    <th>Year Range</th>
+                                    <th>Top Characteristic Terms (Title &amp; Abstract)</th>
+                                    <th>Representative Mendeley Tags</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-overview-summary"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="figure-caption">
+                    <div class="caption-text">
+                        <strong>Summary Table:</strong> High-level thematic synthesis of the active Mendeley BibTeX corpus grouped by discovered research clusters.
+                    </div>
+                    <div class="download-group">
+                        <button class="btn-download txt-btn" onclick="downloadTableTXT('table-overview-summary', 'Executive_Summary_Table.txt')">⬇️ TXT</button>
+                        <button class="btn-download" onclick="downloadTableCSV('table-overview-summary', 'Executive_Summary_Table.csv')">⬇️ CSV</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 1: WORD CLOUDS (TITLE, ABSTRACT & TOPIC CLUSTERS)    -->
+        <!-- ========================================================= -->
+        <section id="view-wordclouds" class="view-section">
+            <div class="tab-bar">
+                <button class="tab-btn active" id="wc-corpus-tab" onclick="switchSubTab('wordclouds', 'wc-corpus-panel', this)">Fig. 6A: Corpus Word Cloud (Title &amp; Abstract)</button>
+                <button class="tab-btn" id="wc-topics-tab" onclick="switchSubTab('wordclouds', 'wc-topics-panel', this)">Fig. 6B: Topic-Specific Word Clouds</button>
+                <button class="tab-btn" id="wc-freq-tab" onclick="switchSubTab('wordclouds', 'wc-freq-panel', this)">Table 1: Term Frequency &amp; TF-IDF Ranking</button>
+            </div>
+
+            <!-- Panel 6A: Customizable Corpus Word Cloud -->
+            <div id="wc-corpus-panel" class="sub-panel">
+                <div class="card" style="padding-bottom:14px;">
+                    <h3>Title &amp; Abstract Text Context Word Cloud Generator</h3>
+                    <p>Customize the text source, maximum word count, and academic color palette below. The word cloud dynamically computes term weights from the active <code>.bib</code> collection.</p>
+                    <div class="control-strip">
+                        <label>Text Source:
+                            <select id="wcSourceSelect" onchange="renderMainWordCloud()">
+                                <option value="title_abstract" selected>Title + Abstract (Combined Context)</option>
+                                <option value="title">Title Only</option>
+                                <option value="abstract">Abstract Only</option>
+                                <option value="tags_keywords">Mendeley Tags &amp; Keywords</option>
+                            </select>
+                        </label>
+                        <label>Max Words:
+                            <input type="range" id="wcMaxWords" min="35" max="150" value="95" oninput="document.getElementById('wcMaxWordsVal').textContent=this.value; renderMainWordCloud();">
+                            <span id="wcMaxWordsVal" style="font-weight:700; color:var(--primary);">95</span>
+                        </label>
+                        <label>Palette:
+                            <select id="wcPaletteSelect" onchange="renderMainWordCloud()">
+                                <option value="academic" selected>Academic Navy &amp; Teal</option>
+                                <option value="viridis">Scientific Viridis</option>
+                                <option value="warm">Energy Amber &amp; Crimson</option>
+                            </select>
+                        </label>
+                        <button class="btn-upload" style="flex:0 0 auto;" onclick="renderMainWordCloud()">↻ Re-layout Cloud</button>
+                    </div>
+                </div>
+
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">☁️ Figure 6A: High-Resolution Corpus Word Cloud</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-wc-main', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-wc-main">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-wc-main', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-wc-main')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-wc-main">
+                            <canvas id="canvas-wc-main" width="1150" height="540"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text" id="wcMainCaption">
+                            <strong>Figure 6A:</strong> Word cloud generated from combined <code>title</code> and <code>abstract</code> text across all documents in the collection. Font size reflects weighted corpus prominence.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-wc-main', 'Figure_6A_Corpus_WordCloud.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-wc-main', 'Figure_6A_Corpus_WordCloud.pdf', 'Figure 6A: Corpus Word Cloud')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 6B: Multi-Panel Topic Word Clouds (Replicating Fig. 6 of Preprint) -->
+            <div id="wc-topics-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">🧩 Figure 6B (Fig. 6 in Preprint): Word Clouds per Discovered Research Topic</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-wc-topics', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-wc-topics">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-wc-topics', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-wc-topics')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-wc-topics">
+                            <canvas id="canvas-wc-topics" width="1180" height="760"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 6B (Replicating Fig. 6 in Abuella, 2024):</strong> Small-multiples panel of topic-specific word clouds extracted from each cluster's <code>title</code> and <code>abstract</code> corpus.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-wc-topics', 'Figure_6B_Topic_WordClouds.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-wc-topics', 'Figure_6B_Topic_WordClouds.pdf', 'Figure 6B: Word Clouds per Topic Cluster')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Table 1: Top Corpus Terms Table -->
+            <div id="wc-freq-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">📊 Table 1: Top 40 Extracted Keywords &amp; Terms (Title + Abstract Context)</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('tbl-wc-terms', -0.1)">−</button>
+                            <span class="zoom-level" id="zoom-label-tbl-wc-terms">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('tbl-wc-terms', 0.1)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('tbl-wc-terms')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="table-viewport">
+                        <div class="table-zoom-wrapper" id="zoom-wrap-tbl-wc-terms">
+                            <table class="data-table" id="table-wc-terms">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Term / Token</th>
+                                        <th>Total Occurrences</th>
+                                        <th>Document Frequency (Docs)</th>
+                                        <th>Corpus Coverage (%)</th>
+                                        <th>Primary Associated Topic</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-wc-terms"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Table 1:</strong> Quantitative term frequency distribution underlying the Title &amp; Abstract Word Cloud after academic stopword filtering.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download txt-btn" onclick="downloadTableTXT('table-wc-terms', 'Table_1_Corpus_Term_Frequencies.txt')">⬇️ TXT</button>
+                            <button class="btn-download" onclick="downloadTableCSV('table-wc-terms', 'Table_1_Corpus_Term_Frequencies.csv')">⬇️ CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: BIBLIOMETRIC VISUALIZATIONS (FIGS. 2, 3, 4, 5)    -->
+        <!-- ========================================================= -->
+        <section id="view-bibliometrics" class="view-section">
+            <div class="tab-bar">
+                <button class="tab-btn active" id="bib-year-tab" onclick="switchSubTab('bibliometrics', 'bib-year-panel', this)">Fig. 2: Publications per Year</button>
+                <button class="tab-btn" id="bib-type-tab" onclick="switchSubTab('bibliometrics', 'bib-type-panel', this)">Fig. 3: Publications per Document Type</button>
+                <button class="tab-btn" id="bib-venue-tab" onclick="switchSubTab('bibliometrics', 'bib-venue-panel', this)">Fig. 4: Top Journals &amp; Venues</button>
+                <button class="tab-btn" id="bib-author-tab" onclick="switchSubTab('bibliometrics', 'bib-author-panel', this)">Fig. 5: Top Authors &amp; Mendeley Tags</button>
+            </div>
+
+            <!-- Fig 2: Publications per Year -->
+            <div id="bib-year-panel" class="sub-panel">
+                <div class="card" style="padding-bottom:12px;">
+                    <h3>Temporal Publication Distribution (Replicating Fig. 2 of Abuella, 2024)</h3>
+                    <div class="control-strip">
+                        <label>Year Filter Mode:
+                            <select id="yearFilterMode" onchange="renderPublicationsPerYear()">
+                                <option value="modern" selected>Focused Modern Window (2010 – Present)</option>
+                                <option value="all">Full Collection Range (All Years)</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">📈 Figure 2: Publications per Year</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-year', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-bib-year">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-year', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-bib-year')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-bib-year">
+                            <canvas id="canvas-bib-year" width="1100" height="460"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 2:</strong> Number of academic publications per year in the active Mendeley BibTeX collection, illustrating recent research acceleration.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-year', 'Figure_2_Publications_Per_Year.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-year', 'Figure_2_Publications_Per_Year.pdf', 'Figure 2: Publications per Year')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fig 3: Publications per Document Type -->
+            <div id="bib-type-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">📚 Figure 3: Distribution by BibTeX Document Type</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-type', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-bib-type">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-type', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-bib-type')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-bib-type">
+                            <canvas id="canvas-bib-type" width="1100" height="450"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 3:</strong> Breakdown of BibTeX entry types (<code>@article</code>, <code>@techreport</code>, <code>@misc</code>, <code>@book</code>, <code>@inproceedings</code>, etc.).
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-type', 'Figure_3_Publications_Per_DocType.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-type', 'Figure_3_Publications_Per_DocType.pdf', 'Figure 3: Publications per Document Type')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fig 4: Top Journals / Venues -->
+            <div id="bib-venue-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">🏛️ Figure 4: Top Journals, Publishers &amp; Publication Venues</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-venue', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-bib-venue">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-venue', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-bib-venue')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-bib-venue">
+                            <canvas id="canvas-bib-venue" width="1120" height="520"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 4:</strong> Most frequent peer-reviewed journals, institutions, and conference venues across the BibTeX records.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-venue', 'Figure_4_Top_Journals_Venues.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-venue', 'Figure_4_Top_Journals_Venues.pdf', 'Figure 4: Top Journals & Venues')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fig 5: Top Authors & Mendeley Tags -->
+            <div id="bib-author-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">✍️ Figure 5A: Top Contributing Authors in Collection</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-author', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-bib-author">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-author', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-bib-author')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-bib-author">
+                            <canvas id="canvas-bib-author" width="1120" height="480"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 5A:</strong> Authors with the highest publication frequency in the active Mendeley library.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-author', 'Figure_5A_Top_Authors.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-author', 'Figure_5A_Top_Authors.pdf', 'Figure 5A: Top Authors')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">🏷️ Figure 5B: Top Mendeley Tags &amp; Author Keywords</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-tags', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-bib-tags">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-bib-tags', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-bib-tags')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-bib-tags">
+                            <canvas id="canvas-bib-tags" width="1120" height="480"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 5B:</strong> Most frequent custom <code>mendeley-tags</code> and BibTeX <code>keywords</code> annotating the research corpus.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-bib-tags', 'Figure_5B_Top_Mendeley_Tags.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-bib-tags', 'Figure_5B_Top_Mendeley_Tags.pdf', 'Figure 5B: Top Mendeley Tags')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 3: TOPIC MODELING & EVOLUTION (FIGS. 7, 8, 9)        -->
+        <!-- ========================================================= -->
+        <section id="view-topics" class="view-section">
+            <div class="tab-bar">
+                <button class="tab-btn active" id="topic-map-tab" onclick="switchSubTab('topics', 'topic-map-panel', this)">Fig. 7: 2D Document-Topic Similarity Map</button>
+                <button class="tab-btn" id="topic-dist-tab" onclick="switchSubTab('topics', 'topic-dist-panel', this)">Fig. 8 &amp; 9: Topic Counts &amp; Yearly Evolution</button>
+                <button class="tab-btn" id="topic-table-tab" onclick="switchSubTab('topics', 'topic-table-panel', this)">Table 2: Topic Cluster Definitions</button>
+            </div>
+
+            <!-- Fig 7: 2D Document-Topic Map -->
+            <div id="topic-map-panel" class="sub-panel">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">🧭 Figure 7 (Replicating Fig. 7 in Preprint): 2D Semantic Document-Topic Map</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-topic-map', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-topic-map">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-topic-map', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-topic-map')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-topic-map">
+                            <canvas id="canvas-topic-map" width="1140" height="560"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 7:</strong> 2D semantic projection of documents based on TF-IDF Title &amp; Abstract similarity, colored by dominant research topic. Hover over any point to inspect document metadata.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-map', 'Figure_7_Document_Topic_Map.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-map', 'Figure_7_Document_Topic_Map.pdf', 'Figure 7: 2D Document-Topic Map')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fig 8 & Fig 9: Publications per Topic & Evolution Over Years -->
+            <div id="topic-dist-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">📊 Figure 8: Number of Publications per Discovered Topic</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-topic-bar', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-topic-bar">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-topic-bar', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-topic-bar')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-topic-bar">
+                            <canvas id="canvas-topic-bar" width="1120" height="430"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 8 (Replicating Fig. 8 in Preprint):</strong> Total document count assigned to each thematic topic cluster.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-bar', 'Figure_8_Publications_Per_Topic.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-bar', 'Figure_8_Publications_Per_Topic.pdf', 'Figure 8: Publications per Topic')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">📉 Figure 9: Topic Evolution Over Years (2010 – 2026)</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('fig-topic-evol', -0.15)">−</button>
+                            <span class="zoom-level" id="zoom-label-fig-topic-evol">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('fig-topic-evol', 0.15)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('fig-topic-evol')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="figure-viewport">
+                        <div class="figure-zoom-wrapper" id="zoom-wrap-fig-topic-evol">
+                            <canvas id="canvas-topic-evol" width="1120" height="480"></canvas>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Figure 9 (Replicating Fig. 9 in Preprint):</strong> Stacked temporal evolution of research topics across recent publication years, showing the surge in Maritime/AIS routing, Physics-Informed ML, and Hydrogen/Energy Systems.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download" onclick="downloadCanvasPNG('canvas-topic-evol', 'Figure_9_Topic_Evolution_Over_Years.png')">⬇️ PNG</button>
+                            <button class="btn-download pdf-btn" onclick="downloadCanvasPDF('canvas-topic-evol', 'Figure_9_Topic_Evolution_Over_Years.pdf', 'Figure 9: Topic Evolution Over Years')">⬇️ PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table 2: Topic Cluster Definitions -->
+            <div id="topic-table-panel" class="sub-panel" style="display:none;">
+                <div class="figure-container">
+                    <div class="figure-toolbar">
+                        <div class="fig-title">📑 Table 2: Topic Modeling Cluster Summary &amp; Representative Titles</div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" onclick="zoomTarget('tbl-topic-defs', -0.1)">−</button>
+                            <span class="zoom-level" id="zoom-label-tbl-topic-defs">100%</span>
+                            <button class="zoom-btn" onclick="zoomTarget('tbl-topic-defs', 0.1)">+</button>
+                            <button class="zoom-btn" onclick="resetZoom('tbl-topic-defs')">Reset</button>
+                        </div>
+                    </div>
+                    <div class="table-viewport">
+                        <div class="table-zoom-wrapper" id="zoom-wrap-tbl-topic-defs">
+                            <table class="data-table" id="table-topic-defs">
+                                <thead>
+                                    <tr>
+                                        <th>Topic ID</th>
+                                        <th>Topic Label</th>
+                                        <th>Docs</th>
+                                        <th>Top Descriptor Keywords</th>
+                                        <th>Sample Representative Paper Title</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-topic-defs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="figure-caption">
+                        <div class="caption-text">
+                            <strong>Table 2:</strong> Automated topic modeling summary showing anchor keywords and representative papers from each cluster.
+                        </div>
+                        <div class="download-group">
+                            <button class="btn-download txt-btn" onclick="downloadTableTXT('table-topic-defs', 'Table_2_Topic_Cluster_Summary.txt')">⬇️ TXT</button>
+                            <button class="btn-download" onclick="downloadTableCSV('table-topic-defs', 'Table_2_Topic_Cluster_Summary.csv')">⬇️ CSV</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 4: INTERACTIVE BIBTEX DOCUMENT EXPLORER              -->
+        <!-- ========================================================= -->
+        <section id="view-explorer" class="view-section">
+            <div class="card" style="padding-bottom:14px;">
+                <h3>Filter &amp; Search Parsed BibTeX Records</h3>
+                <div class="control-strip">
+                    <label>Search:
+                        <input type="text" id="expSearchInput" placeholder="Title, author, abstract, key..." style="width:230px;" oninput="renderExplorerTable()">
+                    </label>
+                    <label>Topic:
+                        <select id="expTopicFilter" onchange="renderExplorerTable()">
+                            <option value="ALL">All Topics</option>
+                        </select>
+                    </label>
+                    <label>Doc Type:
+                        <select id="expTypeFilter" onchange="renderExplorerTable()">
+                            <option value="ALL">All Types</option>
+                        </select>
+                    </label>
+                    <label>Tag:
+                        <select id="expTagFilter" onchange="renderExplorerTable()">
+                            <option value="ALL">All Mendeley Tags</option>
+                        </select>
+                    </label>
+                    <span id="expMatchCount" style="font-weight:700; color:var(--primary); margin-left:auto;">Showing 0 documents</span>
+                </div>
+            </div>
+
+            <div class="figure-container">
+                <div class="figure-toolbar">
+                    <div class="fig-title">🗂️ Table 3: Complete Parsed Mendeley BibTeX Literature Table</div>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomTarget('tbl-explorer', -0.1)">−</button>
+                        <span class="zoom-level" id="zoom-label-tbl-explorer">100%</span>
+                        <button class="zoom-btn" onclick="zoomTarget('tbl-explorer', 0.1)">+</button>
+                        <button class="zoom-btn" onclick="resetZoom('tbl-explorer')">Reset</button>
+                    </div>
+                </div>
+                <div class="table-viewport" style="max-height:660px;">
+                    <div class="table-zoom-wrapper" id="zoom-wrap-tbl-explorer">
+                        <table class="data-table" id="table-explorer">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Year</th>
+                                    <th>Type</th>
+                                    <th>Title &amp; Abstract Excerpt</th>
+                                    <th>Authors</th>
+                                    <th>Journal / Venue</th>
+                                    <th>Assigned Topic</th>
+                                    <th>Mendeley Tags</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-explorer"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="figure-caption">
+                    <div class="caption-text">
+                        <strong>Table 3:</strong> Full metadata table extracted from the active <code>.bib</code> file. Export filtered or complete rows as formatted plain-text (<code>.txt</code>) or spreadsheet (<code>.csv</code>).
+                    </div>
+                    <div class="download-group">
+                        <button class="btn-download txt-btn" onclick="downloadTableTXT('table-explorer', 'Mendeley_BibTeX_Documents.txt')">⬇️ TXT</button>
+                        <button class="btn-download" onclick="downloadTableCSV('table-explorer', 'Mendeley_BibTeX_Documents.csv')">⬇️ CSV</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Hover Tooltip for 2D Document-Topic Map -->
+    <div id="scatterTooltip"></div>
+    <!-- Toast Notification -->
+    <div id="toastNotification"></div>
+
+
+
+    <!-- ===================================================================== -->
+    <!-- MAIN JAVASCRIPT ENGINE: PARSER, OUTLIER-RESISTANT STATS & CHARTS      -->
+    <!-- ===================================================================== -->
+    <script>
+        /* ===================== GLOBAL STATE ===================== */
+        let parsedDocs = [];
+        let topicClusters = [];
+        let corpusTermStats = [];
+        let currentBibFilename = 'None';
+        const zoomLevels = {};
+
+        // Topic anchor definitions matching corpus themes
+        const TOPIC_DEFINITIONS = [
+            {
+                id: 0,
+                label: 'Solar Irradiance & PV Forecasting',
+                shortLabel: 'Solar & PV Forecasting',
+                color: '#1d4ed8',
+                keywords: ['solar', 'irradiance', 'photovoltaic', 'pv', 'sky', 'cloud', 'ghi', 'clear-sky', 'nsrdb', 'sun4cast', 'pyranometer']
+            },
+            {
+                id: 1,
+                label: 'Maritime Routing, AIS & Shipping',
+                shortLabel: 'Maritime & AIS Routing',
+                color: '#047857',
+                keywords: ['ship', 'shipping', 'maritime', 'ais', 'vessel', 'port', 'bunkering', 'routing', 'steaming', 'voyage', 'container', 'imo', 'liner']
+            },
+            {
+                id: 2,
+                label: 'Hydrogen, Gas Networks & Energy Systems',
+                shortLabel: 'Hydrogen & Energy Grids',
+                color: '#b45309',
+                keywords: ['hydrogen', 'gas', 'pipeline', 'electrolyzer', 'power-to-gas', 'grid', 'electricity', 'sector', 'renewable', 'storage', 'system', 'capacity']
+            },
+            {
+                id: 3,
+                label: 'Physics-Informed ML & Graph Networks',
+                shortLabel: 'Physics-Informed & GNN',
+                color: '#6d28d9',
+                keywords: ['physics-informed', 'pinn', 'graph', 'gnn', 'partial', 'differential', 'equations', 'pde', 'operator', 'neural', 'networks', 'navier-stokes', 'fourier']
+            },
+            {
+                id: 4,
+                label: 'Probabilistic & Wind Forecasting',
+                shortLabel: 'Probabilistic & Wind',
+                color: '#0e7490',
+                keywords: ['probabilistic', 'wind', 'ensemble', 'quantile', 'nwp', 'weather', 'prediction', 'reanalysis', 'era5', 'interval', 'conformal', 'crps', 'forecast']
+            },
+            {
+                id: 5,
+                label: 'Optimization, Statistics & Reviews',
+                shortLabel: 'OR, Theory & Reviews',
+                color: '#be123c',
+                keywords: ['optimization', 'programming', 'stochastic', 'statistical', 'review', 'survey', 'literature', 'mendeley', 'bibliometric', 'convex', 'theory', 'decision']
+            }
+        ];
+
+        // Academic + BibTeX stopwords
+        const STOPWORDS = new Set([
+            'the','and','of','to','in','a','for','with','on','as','by','is','are','from','that','this','an','be','or','at',
+            'using','based','via','into','their','which','can','also','more','these','such','between','both','most','have',
+            'has','been','were','was','its','they','them','we','our','paper','study','work','approach','approaches','method',
+            'methods','methodology','results','show','shows','demonstrate','demonstrates','proposed','propose','presents',
+            'presented','develop','developed','develops','analysis','review','systematic','comprehensive','recent','advances',
+            'new','novel','different','various','multiple','large','scale','high','low','short','term','long','multi','step',
+            'ahead','time','series','data','driven','model','models','modeling','modelling','framework','system','systems',
+            'performance','accuracy','evaluation','assessment','applications','application','challenges','solutions','case',
+            'ieee','elsevier','springer','wiley','transactions','journal','international','conference','proceedings','vol',
+            'pp','pages','number','volume','year','month','aug','sep','oct','nov','dec','jan','feb','mar','apr','may','jun','jul',
+            'use','used','under','across','over','through','while','where','when','how','what','than','each','other','all',
+            'any','some','many','well','first','second','three','one','et','al','etc','both','during','within','without',
+            'including','provide','provides','providing','enable','enables','enabling','improve','improves','improving','improvement'
+        ]);
+
+        /* ===================== BIBTEX PARSER & OUTLIER FILTER ===================== */
+        function computeOutlierResistantYearStats(entries) {
+            const rawYears = entries.map(e => e.year).filter(y => y !== null && !isNaN(y));
+            if (rawYears.length === 0) return { min: null, max: null, peak: null, validYears: [] };
+
+            const currentRealYear = new Date().getFullYear();
+            // Filter realistic academic publication bounds (1900 to currentYear + 1)
+            const plausible = rawYears.filter(y => y >= 1900 && y <= currentRealYear + 1);
+            if (plausible.length === 0) return { min: null, max: null, peak: null, validYears: [] };
+
+            plausible.sort((a, b) => a - b);
+            
+            // Interquartile Range (IQR) fence to eliminate extreme stray typos (e.g. 1000, 2929)
+            const q1 = plausible[Math.floor(plausible.length * 0.25)];
+            const q3 = plausible[Math.floor(plausible.length * 0.75)];
+            const iqr = q3 - q1;
+            const lowerFence = Math.max(1900, q1 - 1.5 * iqr);
+            const upperFence = Math.min(currentRealYear + 1, q3 + 1.5 * iqr);
+
+            const validYears = plausible.filter(y => y >= lowerFence && y <= upperFence);
+            if (validYears.length === 0) return { min: plausible[0], max: plausible[plausible.length - 1], peak: plausible[0], validYears: plausible };
+
+            const min = validYears[0];
+            const max = validYears[validYears.length - 1];
+
+            const counts = {};
+            validYears.forEach(y => counts[y] = (counts[y] || 0) + 1);
+            let peak = min;
+            let maxCount = -1;
+            for (const [yr, cnt] of Object.entries(counts)) {
+                if (cnt > maxCount) {
+                    maxCount = cnt;
+                    peak = parseInt(yr, 10);
+                }
+            }
+
+            return { min, max, peak, validYears };
+        }
+
+        function parseBibTeX(rawText) {
+            const entries = [];
+            const cleaned = rawText.replace(/\r\n/g, '\n');
+            let idx = 0;
+            const len = cleaned.length;
+
+            while (idx < len) {
+                const atPos = cleaned.indexOf('@', idx);
+                if (atPos === -1) break;
+
+                const headerMatch = cleaned.slice(atPos).match(/^@([a-zA-Z]+)\s*\{\s*([^,\s]+)\s*,/);
+                if (!headerMatch) {
+                    idx = atPos + 1;
+                    continue;
+                }
+
+                const entryType = '@' + headerMatch[1].toLowerCase();
+                const citationKey = headerMatch[2].trim();
+                let cursor = atPos + headerMatch[0].length;
+                let braceDepth = 1;
+                const bodyStart = cursor;
+
+                while (cursor < len && braceDepth > 0) {
+                    const ch = cleaned[cursor];
+                    if (ch === '{') braceDepth++;
+                    else if (ch === '}') braceDepth--;
+                    cursor++;
+                }
+
+                const bodyText = cleaned.slice(bodyStart, cursor - 1);
+                const fields = parseBibFields(bodyText);
+
+                const title = cleanLatex(fields.title || 'Untitled Document');
+                const abstract = cleanLatex(fields.abstract || '');
+                const authorRaw = cleanLatex(fields.author || 'Unknown Author');
+                const authors = authorRaw.split(/\s+and\s+/i).map(a => a.trim()).filter(Boolean);
+                const yearMatch = (fields.year || '').match(/\d{4}/);
+                const year = yearMatch ? parseInt(yearMatch[0], 10) : null;
+                const venue = cleanLatex(fields.journal || fields.booktitle || fields.institution || fields.publisher || fields.howpublished || 'Preprint / Other');
+                const tagsRaw = cleanLatex(fields['mendeley-tags'] || '');
+                const keywordsRaw = cleanLatex(fields.keywords || '');
+                const tags = tagsRaw ? tagsRaw.split(/[,;]+/).map(t => t.trim()).filter(Boolean) : [];
+                const keywords = keywordsRaw ? keywordsRaw.split(/[,;]+/).map(k => k.trim()).filter(Boolean) : [];
+
+                entries.push({
+                    index: entries.length + 1,
+                    key: citationKey,
+                    type: entryType,
+                    title,
+                    abstract,
+                    authorRaw,
+                    authors,
+                    year,
+                    venue,
+                    tags,
+                    keywords,
+                    doi: fields.doi || ''
+                });
+
+                idx = cursor;
+            }
+
+            return entries;
+        }
+
+        function parseBibFields(body) {
+            const fields = {};
+            let i = 0;
+            const n = body.length;
+
+            while (i < n) {
+                while (i < n && /[\s,]/.test(body[i])) i++;
+                if (i >= n) break;
+
+                const eqPos = body.indexOf('=', i);
+                if (eqPos === -1) break;
+
+                const fieldName = body.slice(i, eqPos).trim().toLowerCase();
+                i = eqPos + 1;
+                while (i < n && /\s/.test(body[i])) i++;
+                if (i >= n) break;
+
+                let val = '';
+                if (body[i] === '{') {
+                    let depth = 1;
+                    i++;
+                    const start = i;
+                    while (i < n && depth > 0) {
+                        if (body[i] === '{') depth++;
+                        else if (body[i] === '}') depth--;
+                        i++;
+                    }
+                    val = body.slice(start, i - 1);
+                } else if (body[i] === '"') {
+                    i++;
+                    const start = i;
+                    while (i < n && body[i] !== '"') {
+                        if (body[i] === '\\') i++;
+                        i++;
+                    }
+                    val = body.slice(start, i);
+                    i++;
+                } else {
+                    const start = i;
+                    while (i < n && body[i] !== ',') i++;
+                    val = body.slice(start, i);
+                }
+
+                fields[fieldName] = val.trim();
+            }
+            return fields;
+        }
+
+        function cleanLatex(str) {
+            return str
+                .replace(/\{\\['"`^~=.uvHcdbtr]\{?([a-zA-Z])\}?\}/g, '$1')
+                .replace(/\\['"`^~=.uvHcdbtr]\{?([a-zA-Z])\}?/g, '$1')
+                .replace(/--/g, '–')
+                .replace(/[{}]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        /* ===================== NLP TOKENIZATION & TOPIC MODELING ===================== */
+        function tokenizeText(text) {
+            if (!text) return [];
+            return text
+                .toLowerCase()
+                .replace(/[^a-z0-9\-]+/g, ' ')
+                .split(/\s+/)
+                .map(t => t.replace(/^-+|-+$/g, ''))
+                .filter(t => t.length >= 3 && !/^\d+$/.test(t) && !STOPWORDS.has(t));
+        }
+
+        function analyzeCorpus(docs) {
+            const totalDocs = docs.length || 1;
+            const docFreq = new Map();
+            const totalFreq = new Map();
+
+            docs.forEach(doc => {
+                const titleTokens = tokenizeText(doc.title);
+                const absTokens = tokenizeText(doc.abstract);
+                const weightedTokens = [...titleTokens, ...titleTokens, ...absTokens];
+                doc._tokens = weightedTokens;
+
+                const uniqueInDoc = new Set([...titleTokens, ...absTokens]);
+                uniqueInDoc.forEach(tok => {
+                    docFreq.set(tok, (docFreq.get(tok) || 0) + 1);
+                });
+
+                weightedTokens.forEach(tok => {
+                    totalFreq.set(tok, (totalFreq.get(tok) || 0) + 1);
+                });
+            });
+
+            docs.forEach(doc => {
+                const textBlob = `${doc.title} ${doc.title} ${doc.abstract} ${doc.tags.join(' ')} ${doc.keywords.join(' ')}`.toLowerCase();
+                const scores = TOPIC_DEFINITIONS.map(topic => {
+                    let s = 0;
+                    topic.keywords.forEach(kw => {
+                        const regex = new RegExp(`\\b${kw.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`, 'g');
+                        const matches = textBlob.match(regex);
+                        if (matches) {
+                            s += matches.length * (kw.length > 5 ? 1.4 : 1.0);
+                        }
+                    });
+                    return s;
+                });
+
+                let bestIdx = 0;
+                let maxScore = -1;
+                scores.forEach((sc, idx) => {
+                    if (sc > maxScore) {
+                        maxScore = sc;
+                        bestIdx = idx;
+                    }
+                });
+
+                doc.topicId = bestIdx;
+                doc.topicLabel = TOPIC_DEFINITIONS[bestIdx].label;
+                doc.topicShort = TOPIC_DEFINITIONS[bestIdx].shortLabel;
+                doc.topicScores = scores;
+
+                const angle = (bestIdx / TOPIC_DEFINITIONS.length) * Math.PI * 2 - Math.PI / 3;
+                const radius = 1.65;
+                const cx = Math.cos(angle) * radius;
+                const cy = Math.sin(angle) * radius;
+
+                let secondIdx = (bestIdx + 1) % TOPIC_DEFINITIONS.length;
+                let secondScore = -1;
+                scores.forEach((sc, idx) => {
+                    if (idx !== bestIdx && sc > secondScore) {
+                        secondScore = sc;
+                        secondIdx = idx;
+                    }
+                });
+                const angle2 = (secondIdx / TOPIC_DEFINITIONS.length) * Math.PI * 2 - Math.PI / 3;
+                const pull = maxScore > 0 ? Math.min(0.45, (secondScore / (maxScore + 1)) * 0.6) : 0.1;
+
+                let hash = 0;
+                for (let c = 0; c < doc.key.length; c++) hash = ((hash << 5) - hash) + doc.key.charCodeAt(c);
+                const jx = ((Math.sin(hash) + 1) / 2 - 0.5) * 0.95;
+                const jy = ((Math.cos(hash * 1.3) + 1) / 2 - 0.5) * 0.95;
+
+                doc.projX = cx * (1 - pull) + Math.cos(angle2) * radius * pull + jx;
+                doc.projY = cy * (1 - pull) + Math.sin(angle2) * radius * pull + jy;
+            });
+
+            topicClusters = TOPIC_DEFINITIONS.map(td => {
+                const clusterDocs = docs.filter(d => d.topicId === td.id);
+                const termCounts = new Map();
+                clusterDocs.forEach(d => {
+                    (d._tokens || []).forEach(tok => {
+                        termCounts.set(tok, (termCounts.get(tok) || 0) + 1);
+                    });
+                });
+                const topTerms = Array.from(termCounts.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 22)
+                    .map(([term, count]) => ({ term, count }));
+
+                return {
+                    ...td,
+                    docs: clusterDocs,
+                    count: clusterDocs.length,
+                    share: ((clusterDocs.length / totalDocs) * 100).toFixed(1),
+                    topTerms
+                };
+            });
+
+            corpusTermStats = Array.from(totalFreq.entries())
+                .map(([term, count]) => {
+                    const df = docFreq.get(term) || 1;
+                    let bestTopic = TOPIC_DEFINITIONS[0].shortLabel;
+                    let bestTopicHits = -1;
+                    topicClusters.forEach(tc => {
+                        const hit = tc.topTerms.find(t => t.term === term);
+                        if (hit && hit.count > bestTopicHits) {
+                            bestTopicHits = hit.count;
+                            bestTopic = tc.shortLabel;
+                        }
+                    });
+                    return {
+                        term,
+                        count,
+                        df,
+                        coverage: ((df / totalDocs) * 100).toFixed(1),
+                        primaryTopic: bestTopic
+                    };
+                })
+                .sort((a, b) => b.count - a.count);
+        }
+
+        /* ===================== WORD CLOUD RENDERER ===================== */
+        const WORD_PALETTES = {
+            academic: ['#1e3a8a', '#1d4ed8', '#0f766e', '#0369a1', '#4338ca', '#1e40af', '#047857', '#334155'],
+            viridis:  ['#440154', '#482878', '#3e4989', '#31688e', '#26828e', '#1f9e89', '#35b779', '#6ece58'],
+            warm:     ['#9a3412', '#b45309', '#be123c', '#1e3a8a', '#c2410c', '#0f766e', '#7c2d12', '#4338ca']
+        };
+
+        function drawEmptyCanvasState(canvas, message) {
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.strokeRect(16, 16, W - 32, H - 32);
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 15px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(message || 'No .bib dataset loaded. Upload a Mendeley .bib file in the sidebar to generate visualizations.', W / 2, H / 2);
+        }
+
+        function drawWordCloudOnCanvas(canvas, wordList, options = {}) {
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            const palette = WORD_PALETTES[options.palette || 'academic'] || WORD_PALETTES.academic;
+            const minFont = options.minFont || 13;
+            const maxFont = options.maxFont || 62;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, H);
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, W - 2, H - 2);
+
+            if (!wordList || wordList.length === 0) {
+                drawEmptyCanvasState(canvas, 'No text tokens available.');
+                return;
+            }
+
+            const maxWeight = wordList[0].weight || 1;
+            const minWeight = wordList[wordList.length - 1].weight || 1;
+            const placedBoxes = [];
+
+            const cx = W / 2;
+            const cy = H / 2;
+
+            wordList.forEach((item, idx) => {
+                const norm = maxWeight === minWeight
+                    ? 1
+                    : Math.pow((item.weight - minWeight) / (maxWeight - minWeight), 0.62);
+                const fontSize = Math.round(minFont + norm * (maxFont - minFont));
+                const fontWeight = norm > 0.55 ? '800' : (norm > 0.25 ? '700' : '600');
+                ctx.font = `${fontWeight} ${fontSize}px Inter, sans-serif`;
+
+                const metrics = ctx.measureText(item.word);
+                const textW = metrics.width + 8;
+                const textH = fontSize * 1.08;
+
+                let angle = idx * 0.65;
+                let radius = 0;
+                let placed = false;
+
+                for (let step = 0; step < 1800; step++) {
+                    const x = cx + radius * Math.cos(angle) * 1.38 - textW / 2;
+                    const y = cy + radius * Math.sin(angle) * 0.92 - textH / 2;
+
+                    if (x >= 16 && y >= 16 && x + textW <= W - 16 && y + textH <= H - 16) {
+                        let collides = false;
+                        for (let b = 0; b < placedBoxes.length; b++) {
+                            const box = placedBoxes[b];
+                            if (x < box.x + box.w && x + textW > box.x && y < box.y + box.h && y + textH > box.y) {
+                                collides = true;
+                                break;
+                            }
+                        }
+                        if (!collides) {
+                            placedBoxes.push({ x, y, w: textW, h: textH });
+                            ctx.fillStyle = palette[idx % palette.length];
+                            ctx.textBaseline = 'top';
+                            ctx.textAlign = 'left';
+                            ctx.fillText(item.word, x + 4, y + 2);
+                            placed = true;
+                            break;
+                        }
+                    }
+
+                    angle += 0.28;
+                    radius += 0.42;
+                }
+            });
+        }
+
+        function getWordWeightsForSource(source, maxWords) {
+            const counts = new Map();
+            parsedDocs.forEach(doc => {
+                let text = '';
+                if (source === 'title_abstract') text = `${doc.title} ${doc.title} ${doc.abstract}`;
+                else if (source === 'title') text = doc.title;
+                else if (source === 'abstract') text = doc.abstract;
+                else if (source === 'tags_keywords') text = `${doc.tags.join(' ')} ${doc.keywords.join(' ')}`;
+
+                if (source === 'tags_keywords') {
+                    [...doc.tags, ...doc.keywords].forEach(tag => {
+                        const cleanTag = tag.trim();
+                        if (cleanTag.length >= 2) {
+                            counts.set(cleanTag, (counts.get(cleanTag) || 0) + 1);
+                        }
+                    });
+                } else {
+                    tokenizeText(text).forEach(tok => {
+                        counts.set(tok, (counts.get(tok) || 0) + 1);
+                    });
+                }
+            });
+
+            return Array.from(counts.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, maxWords)
+                .map(([word, weight]) => ({ word, weight }));
+        }
+
+        function renderOverviewWordCloud() {
+            const canvas = document.getElementById('canvas-overview-wc');
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+            const words = getWordWeightsForSource('title_abstract', 95);
+            drawWordCloudOnCanvas(canvas, words, { palette: 'academic', minFont: 13, maxFont: 60 });
+        }
+
+        function renderMainWordCloud() {
+            const canvas = document.getElementById('canvas-wc-main');
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+            const source = document.getElementById('wcSourceSelect').value;
+            const maxWords = parseInt(document.getElementById('wcMaxWords').value, 10) || 95;
+            const palette = document.getElementById('wcPaletteSelect').value;
+            const words = getWordWeightsForSource(source, maxWords);
+            drawWordCloudOnCanvas(canvas, words, { palette, minFont: 13, maxFont: 64 });
+
+            const labelMap = {
+                title_abstract: 'combined Title + Abstract text context',
+                title: 'Document Titles only',
+                abstract: 'Document Abstracts only',
+                tags_keywords: 'Mendeley Tags & Author Keywords'
+            };
+            document.getElementById('wcMainCaption').innerHTML =
+                `<strong>Figure 6A:</strong> Word cloud generated from <em>${labelMap[source]}</em> (top ${words.length} weighted terms across ${parsedDocs.length} documents).`;
+        }
+
+        function renderTopicWordCloudsGrid() {
+            const canvas = document.getElementById('canvas-wc-topics');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, H);
+
+            const cols = 3;
+            const rows = 2;
+            const pad = 18;
+            const cellW = (W - pad * (cols + 1)) / cols;
+            const cellH = (H - pad * (rows + 1)) / rows;
+
+            topicClusters.forEach((tc, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x0 = pad + col * (cellW + pad);
+                const y0 = pad + row * (cellH + pad);
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(x0, y0, cellW, cellH);
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(x0, y0, cellW, cellH);
+
+                ctx.fillStyle = tc.color;
+                ctx.fillRect(x0, y0, cellW, 34);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '700 13px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`Topic ${tc.id + 1}: ${tc.shortLabel} (n=${tc.count})`, x0 + 12, y0 + 17);
+
+                const subCanvas = document.createElement('canvas');
+                subCanvas.width = Math.floor(cellW - 8);
+                subCanvas.height = Math.floor(cellH - 42);
+                const subWords = tc.topTerms.slice(0, 22).map(t => ({ word: t.term, weight: t.count }));
+                drawWordCloudOnCanvas(subCanvas, subWords, { palette: 'academic', minFont: 11, maxFont: 30 });
+                ctx.drawImage(subCanvas, x0 + 4, y0 + 38);
+            });
+        }
+
+        /* ===================== BIBLIOMETRIC CHARTS ===================== */
+        function drawChartHeader(ctx, W, title, subtitle) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, W, ctx.canvas.height);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '700 18px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText(title, 58, 20);
+
+            if (subtitle) {
+                ctx.fillStyle = '#64748b';
+                ctx.font = '400 13px Inter, sans-serif';
+                ctx.fillText(subtitle, 58, 44);
+            }
+        }
+
+        function renderPublicationsPerYear() {
+            const canvas = document.getElementById('canvas-bib-year');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+
+            const mode = document.getElementById('yearFilterMode').value;
+            const yearStats = computeOutlierResistantYearStats(parsedDocs);
+
+            const yearCounts = new Map();
+            parsedDocs.forEach(d => {
+                if (d.year && yearStats.validYears.includes(d.year)) {
+                    if (mode === 'modern' && d.year < 2010) return;
+                    yearCounts.set(d.year, (yearCounts.get(d.year) || 0) + 1);
+                }
+            });
+
+            const years = Array.from(yearCounts.keys()).sort((a, b) => a - b);
+            if (years.length === 0) {
+                drawEmptyCanvasState(canvas, 'No valid publication years found within plausible bounds.');
+                return;
+            }
+
+            const minY = years[0];
+            const maxY = years[years.length - 1];
+            const fullYears = [];
+            if (mode === 'modern' && maxY - minY <= 30) {
+                for (let y = minY; y <= maxY; y++) fullYears.push(y);
+            } else {
+                fullYears.push(...years);
+            }
+
+            const values = fullYears.map(y => yearCounts.get(y) || 0);
+            const maxVal = Math.max(...values, 1);
+
+            drawChartHeader(ctx, W, 'Publications per Year (Fig. 2 - Outlier-Resistant)', `Distribution of references across ${minY}–${maxY} (IQR fenced)`);
+
+            const margin = { top: 82, right: 36, bottom: 64, left: 68 };
+            const plotW = W - margin.left - margin.right;
+            const plotH = H - margin.top - margin.bottom;
+
+            const yTicks = 5;
+            ctx.font = '500 12px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let t = 0; t <= yTicks; t++) {
+                const val = Math.round((maxVal / yTicks) * t);
+                const yPos = margin.top + plotH - (val / maxVal) * plotH;
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, yPos);
+                ctx.lineTo(margin.left + plotW, yPos);
+                ctx.stroke();
+
+                ctx.fillStyle = '#475569';
+                ctx.fillText(val.toString(), margin.left - 10, yPos);
+            }
+
+            const step = plotW / fullYears.length;
+            const barW = Math.min(44, step * 0.68);
+            fullYears.forEach((yr, i) => {
+                const val = values[i];
+                const barH = (val / maxVal) * plotH;
+                const x = margin.left + i * step + (step - barW) / 2;
+                const y = margin.top + plotH - barH;
+
+                ctx.fillStyle = '#2563eb';
+                ctx.fillRect(x, y, barW, barH);
+
+                if (val > 0) {
+                    ctx.fillStyle = '#1e3a8a';
+                    ctx.font = '700 12px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText(val.toString(), x + barW / 2, y - 4);
+                }
+
+                ctx.fillStyle = '#334155';
+                ctx.font = '600 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(yr.toString(), x + barW / 2, margin.top + plotH + 10);
+            });
+
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + plotH);
+            ctx.lineTo(margin.left + plotW, margin.top + plotH);
+            ctx.stroke();
+        }
+
+        function renderPublicationsPerDocType() {
+            const canvas = document.getElementById('canvas-bib-type');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+
+            const typeCounts = new Map();
+            parsedDocs.forEach(d => {
+                typeCounts.set(d.type, (typeCounts.get(d.type) || 0) + 1);
+            });
+
+            const sorted = Array.from(typeCounts.entries()).sort((a, b) => b[1] - a[1]);
+            const maxVal = Math.max(...sorted.map(s => s[1]), 1);
+
+            drawChartHeader(ctx, W, 'Publications per BibTeX Document Type (Fig. 3)', 'Breakdown of reference formats across the Mendeley collection');
+
+            const margin = { top: 82, right: 40, bottom: 64, left: 72 };
+            const plotW = W - margin.left - margin.right;
+            const plotH = H - margin.top - margin.bottom;
+
+            for (let t = 0; t <= 5; t++) {
+                const val = Math.round((maxVal / 5) * t);
+                const yPos = margin.top + plotH - (val / maxVal) * plotH;
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.moveTo(margin.left, yPos);
+                ctx.lineTo(margin.left + plotW, yPos);
+                ctx.stroke();
+
+                ctx.fillStyle = '#475569';
+                ctx.font = '500 12px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(val.toString(), margin.left - 10, yPos);
+            }
+
+            const palette = ['#1e3a8a', '#0f766e', '#b45309', '#6d28d9', '#be123c', '#0369a1'];
+            const step = plotW / sorted.length;
+            const barW = Math.min(85, step * 0.55);
+
+            sorted.forEach(([type, count], i) => {
+                const barH = (count / maxVal) * plotH;
+                const x = margin.left + i * step + (step - barW) / 2;
+                const y = margin.top + plotH - barH;
+                const pct = ((count / parsedDocs.length) * 100).toFixed(1);
+
+                ctx.fillStyle = palette[i % palette.length];
+                ctx.fillRect(x, y, barW, barH);
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '700 13px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`${count} (${pct}%)`, x + barW / 2, y - 6);
+
+                ctx.fillStyle = '#1e293b';
+                ctx.font = '600 13px JetBrains Mono, monospace';
+                ctx.textBaseline = 'top';
+                ctx.fillText(type, x + barW / 2, margin.top + plotH + 12);
+            });
+
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + plotH);
+            ctx.lineTo(margin.left + plotW, margin.top + plotH);
+            ctx.stroke();
+        }
+
+        function drawHorizontalBarChart(canvasId, title, subtitle, items, barColor) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+
+            drawChartHeader(ctx, W, title, subtitle);
+
+            if (!items || items.length === 0) return;
+            const maxVal = Math.max(...items.map(it => it.value), 1);
+
+            const margin = { top: 76, right: 65, bottom: 36, left: 320 };
+            const plotW = W - margin.left - margin.right;
+            const plotH = H - margin.top - margin.bottom;
+            const rowH = plotH / items.length;
+            const barH = Math.min(26, rowH * 0.68);
+
+            for (let t = 0; t <= 5; t++) {
+                const val = Math.round((maxVal / 5) * t);
+                const xPos = margin.left + (val / maxVal) * plotW;
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.moveTo(xPos, margin.top);
+                ctx.lineTo(xPos, margin.top + plotH);
+                ctx.stroke();
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '500 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                ctx.fillText(val.toString(), xPos, margin.top + plotH + 8);
+            }
+
+            items.forEach((it, idx) => {
+                const y = margin.top + idx * rowH + (rowH - barH) / 2;
+                const w = (it.value / maxVal) * plotW;
+
+                ctx.fillStyle = barColor;
+                ctx.fillRect(margin.left, y, w, barH);
+
+                let label = it.label;
+                if (label.length > 42) label = label.slice(0, 39) + '...';
+                ctx.fillStyle = '#1e293b';
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(label, margin.left - 12, y + barH / 2);
+
+                ctx.fillStyle = '#0f172a';
+                ctx.font = '700 12px Inter, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(it.value.toString(), margin.left + w + 8, y + barH / 2);
+            });
+
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + plotH);
+            ctx.stroke();
+        }
+
+        function renderTopVenues() {
+            const counts = new Map();
+            parsedDocs.forEach(d => {
+                if (d.venue && d.venue !== 'Preprint / Other') {
+                    counts.set(d.venue, (counts.get(d.venue) || 0) + 1);
+                }
+            });
+            const top12 = Array.from(counts.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 12)
+                .map(([label, value]) => ({ label, value }));
+
+            drawHorizontalBarChart(
+                'canvas-bib-venue',
+                'Top 12 Journals, Publishers & Venues (Fig. 4)',
+                'Most frequent publication outlets across the Mendeley collection',
+                top12,
+                '#1d4ed8'
+            );
+        }
+
+        function renderTopAuthorsAndTags() {
+            const authorCounts = new Map();
+            parsedDocs.forEach(d => {
+                d.authors.forEach(a => {
+                    if (a && a !== 'Others' && a !== 'Unknown Author') {
+                        authorCounts.set(a, (authorCounts.get(a) || 0) + 1);
+                    }
+                });
+            });
+            const topAuthors = Array.from(authorCounts.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 12)
+                .map(([label, value]) => ({ label, value }));
+
+            drawHorizontalBarChart(
+                'canvas-bib-author',
+                'Top 12 Authors by Document Count (Fig. 5A)',
+                'Most frequently occurring authors in the active BibTeX collection',
+                topAuthors,
+                '#0f766e'
+            );
+
+            const tagCounts = new Map();
+            parsedDocs.forEach(d => {
+                const combined = new Set([...d.tags, ...d.keywords]);
+                combined.forEach(t => {
+                    if (t) tagCounts.set(t, (tagCounts.get(t) || 0) + 1);
+                });
+            });
+            const topTags = Array.from(tagCounts.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 12)
+                .map(([label, value]) => ({ label, value }));
+
+            drawHorizontalBarChart(
+                'canvas-bib-tags',
+                'Top 12 Mendeley Tags & Keywords (Fig. 5B)',
+                'Dominant thematic tags annotating the reference collection',
+                topTags,
+                '#6d28d9'
+            );
+        }
+
+        /* ===================== TOPIC MODELING CHARTS ===================== */
+        let scatterPointsCache = [];
+
+        function renderTopicScatterMap() {
+            const canvas = document.getElementById('canvas-topic-map');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvas);
+                return;
+            }
+
+            drawChartHeader(ctx, W, '2D Semantic Document-Topic Map (Fig. 7)', 'TF-IDF Title & Abstract similarity projection colored by discovered topic cluster');
+
+            const margin = { top: 82, right: 270, bottom: 48, left: 60 };
+            const plotW = W - margin.left - margin.right;
+            const plotH = H - margin.top - margin.bottom;
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(margin.left, margin.top, plotW, plotH);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.strokeRect(margin.left, margin.top, plotW, plotH);
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(margin.left + plotW / 2, margin.top);
+            ctx.lineTo(margin.left + plotW / 2, margin.top + plotH);
+            ctx.moveTo(margin.left, margin.top + plotH / 2);
+            ctx.lineTo(margin.left + plotW, margin.top + plotH / 2);
+            ctx.stroke();
+
+            const xs = parsedDocs.map(d => d.projX);
+            const ys = parsedDocs.map(d => d.projY);
+            const minX = Math.min(...xs, -2.5) - 0.3;
+            const maxX = Math.max(...xs, 2.5) + 0.3;
+            const minY = Math.min(...ys, -2.5) - 0.3;
+            const maxY = Math.max(...ys, 2.5) + 0.3;
+
+            scatterPointsCache = [];
+
+            parsedDocs.forEach(doc => {
+                const px = margin.left + ((doc.projX - minX) / (maxX - minX)) * plotW;
+                const py = margin.top + plotH - ((doc.projY - minY) / (maxY - minY)) * plotH;
+                const color = TOPIC_DEFINITIONS[doc.topicId].color;
+
+                ctx.beginPath();
+                ctx.arc(px, py, 6.5, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 0.85;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                scatterPointsCache.push({ px, py, r: 8, doc });
+            });
+
+            const legX = margin.left + plotW + 22;
+            let legY = margin.top + 10;
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '700 13px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Topic Clusters', legX, legY);
+            legY += 24;
+
+            topicClusters.forEach(tc => {
+                ctx.beginPath();
+                ctx.arc(legX + 7, legY + 6, 6, 0, Math.PI * 2);
+                ctx.fillStyle = tc.color;
+                ctx.fill();
+
+                ctx.fillStyle = '#1e293b';
+                ctx.font = '600 12px Inter, sans-serif';
+                ctx.fillText(`${tc.shortLabel} (${tc.count})`, legX + 20, legY);
+                legY += 28;
+            });
+        }
+
+        function renderTopicDistributionAndEvolution() {
+            const canvasBar = document.getElementById('canvas-topic-bar');
+            const ctxB = canvasBar.getContext('2d');
+            const WB = canvasBar.width;
+            const HB = canvasBar.height;
+
+            if (parsedDocs.length === 0) {
+                drawEmptyCanvasState(canvasBar);
+                drawEmptyCanvasState(document.getElementById('canvas-topic-evol'));
+                return;
+            }
+
+            drawChartHeader(ctxB, WB, 'Publications per Discovered Topic Cluster (Fig. 8)', 'Document distribution across the 6 automated research themes');
+
+            const marginB = { top: 80, right: 36, bottom: 68, left: 68 };
+            const plotWB = WB - marginB.left - marginB.right;
+            const plotHB = HB - marginB.top - marginB.bottom;
+            const maxC = Math.max(...topicClusters.map(t => t.count), 1);
+
+            for (let t = 0; t <= 5; t++) {
+                const val = Math.round((maxC / 5) * t);
+                const yPos = marginB.top + plotHB - (val / maxC) * plotHB;
+                ctxB.strokeStyle = '#e2e8f0';
+                ctxB.beginPath();
+                ctxB.moveTo(marginB.left, yPos);
+                ctxB.lineTo(marginB.left + plotWB, yPos);
+                ctxB.stroke();
+
+                ctxB.fillStyle = '#475569';
+                ctxB.font = '500 12px Inter, sans-serif';
+                ctxB.textAlign = 'right';
+                ctxB.textBaseline = 'middle';
+                ctxB.fillText(val.toString(), marginB.left - 10, yPos);
+            }
+
+            const stepB = plotWB / topicClusters.length;
+            const barWB = Math.min(92, stepB * 0.56);
+
+            topicClusters.forEach((tc, i) => {
+                const barH = (tc.count / maxC) * plotHB;
+                const x = marginB.left + i * stepB + (stepB - barWB) / 2;
+                const y = marginB.top + plotHB - barH;
+
+                ctxB.fillStyle = tc.color;
+                ctxB.fillRect(x, y, barWB, barH);
+
+                ctxB.fillStyle = '#0f172a';
+                ctxB.font = '700 13px Inter, sans-serif';
+                ctxB.textAlign = 'center';
+                ctxB.textBaseline = 'bottom';
+                ctxB.fillText(`${tc.count} (${tc.share}%)`, x + barWB / 2, y - 6);
+
+                ctxB.fillStyle = '#1e293b';
+                ctxB.font = '600 11.5px Inter, sans-serif';
+                ctxB.textBaseline = 'top';
+                ctxB.fillText(tc.shortLabel, x + barWB / 2, marginB.top + plotHB + 12);
+            });
+
+            ctxB.strokeStyle = '#64748b';
+            ctxB.lineWidth = 1.5;
+            ctxB.beginPath();
+            ctxB.moveTo(marginB.left, marginB.top);
+            ctxB.lineTo(marginB.left, marginB.top + plotHB);
+            ctxB.lineTo(marginB.left + plotWB, marginB.top + plotHB);
+            ctxB.stroke();
+
+            // Fig 9: Topic Evolution
+            const canvasEv = document.getElementById('canvas-topic-evol');
+            const ctxE = canvasEv.getContext('2d');
+            const WE = canvasEv.width;
+            const HE = canvasEv.height;
+
+            drawChartHeader(ctxE, WE, 'Topic Evolution Over Years (Fig. 9)', 'Temporal emergence of research themes across recent publication years');
+
+            const yearStats = computeOutlierResistantYearStats(parsedDocs);
+            const yearsSet = new Set();
+            parsedDocs.forEach(d => {
+                if (d.year && yearStats.validYears.includes(d.year) && d.year >= 2010) yearsSet.add(d.year);
+            });
+            const evolYears = Array.from(yearsSet).sort((a, b) => a - b);
+            if (evolYears.length === 0) return;
+
+            const yearTotals = evolYears.map(y => parsedDocs.filter(d => d.year === y).length);
+            const maxStack = Math.max(...yearTotals, 1);
+
+            const marginE = { top: 82, right: 245, bottom: 58, left: 68 };
+            const plotWE = WE - marginE.left - marginE.right;
+            const plotHE = HE - marginE.top - marginE.bottom;
+
+            for (let t = 0; t <= 5; t++) {
+                const val = Math.round((maxStack / 5) * t);
+                const yPos = marginE.top + plotHE - (val / maxStack) * plotHE;
+                ctxE.strokeStyle = '#e2e8f0';
+                ctxE.beginPath();
+                ctxE.moveTo(marginE.left, yPos);
+                ctxE.lineTo(marginE.left + plotWE, yPos);
+                ctxE.stroke();
+
+                ctxE.fillStyle = '#475569';
+                ctxE.font = '500 12px Inter, sans-serif';
+                ctxE.textAlign = 'right';
+                ctxE.textBaseline = 'middle';
+                ctxE.fillText(val.toString(), marginE.left - 10, yPos);
+            }
+
+            const stepE = plotWE / evolYears.length;
+            const barWE = Math.min(42, stepE * 0.66);
+
+            evolYears.forEach((yr, yi) => {
+                const x = marginE.left + yi * stepE + (stepE - barWE) / 2;
+                let cumH = 0;
+
+                topicClusters.forEach(tc => {
+                    const cnt = parsedDocs.filter(d => d.year === yr && d.topicId === tc.id).length;
+                    if (cnt > 0) {
+                        const segH = (cnt / maxStack) * plotHE;
+                        const y = marginE.top + plotHE - cumH - segH;
+                        ctxE.fillStyle = tc.color;
+                        ctxE.fillRect(x, y, barWE, segH);
+                        cumH += segH;
+                    }
+                });
+
+                ctxE.fillStyle = '#334155';
+                ctxE.font = '600 11px Inter, sans-serif';
+                ctxE.textAlign = 'center';
+                ctxE.textBaseline = 'top';
+                ctxE.fillText(yr.toString(), x + barWE / 2, marginE.top + plotHE + 10);
+            });
+
+            ctxE.strokeStyle = '#64748b';
+            ctxE.lineWidth = 1.5;
+            ctxE.beginPath();
+            ctxE.moveTo(marginE.left, marginE.top);
+            ctxE.lineTo(marginE.left, marginE.top + plotHE);
+            ctxE.lineTo(marginE.left + plotWE, marginE.top + plotHE);
+            ctxE.stroke();
+
+            const legX = marginE.left + plotWE + 20;
+            let legY = marginE.top + 12;
+            topicClusters.forEach(tc => {
+                ctxE.fillStyle = tc.color;
+                ctxE.fillRect(legX, legY, 14, 14);
+                ctxE.fillStyle = '#1e293b';
+                ctxE.font = '600 11.5px Inter, sans-serif';
+                ctxE.textAlign = 'left';
+                ctxE.textBaseline = 'middle';
+                ctxE.fillText(tc.shortLabel, legX + 20, legY + 7);
+                legY += 26;
+            });
+        }
+
+        /* ===================== TABLES POPULATION ===================== */
+        function renderAllTables() {
+            const tbodyOv = document.getElementById('tbody-overview-summary');
+            tbodyOv.innerHTML = topicClusters.map(tc => {
+                const yearStats = computeOutlierResistantYearStats(tc.docs);
+                const ySpan = yearStats.min !== null ? `${yearStats.min} – ${yearStats.max}` : 'N/A';
+                const top5Words = tc.topTerms.slice(0, 6).map(t => t.term).join(', ');
+                const tagMap = new Map();
+                tc.docs.forEach(d => d.tags.forEach(tg => tagMap.set(tg, (tagMap.get(tg) || 0) + 1)));
+                const topTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4).map(x => x[0]).join(', ') || 'General';
+                return `
+                    <tr>
+                        <td><strong>${tc.label}</strong></td>
+                        <td><strong>${tc.count}</strong></td>
+                        <td>${tc.share}%</td>
+                        <td>${ySpan}</td>
+                        <td>${top5Words}</td>
+                        <td>${topTags}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const tbodyTerms = document.getElementById('tbody-wc-terms');
+            tbodyTerms.innerHTML = corpusTermStats.slice(0, 40).map((st, idx) => `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${st.term}</strong></td>
+                    <td>${st.count}</td>
+                    <td>${st.df} / ${parsedDocs.length}</td>
+                    <td>${st.coverage}%</td>
+                    <td>${st.primaryTopic}</td>
+                </tr>
+            `).join('');
+
+            const tbodyTopicDefs = document.getElementById('tbody-topic-defs');
+            tbodyTopicDefs.innerHTML = topicClusters.map(tc => {
+                const sampleTitle = tc.docs[0] ? tc.docs[0].title : 'N/A';
+                const kwList = tc.topTerms.slice(0, 8).map(t => t.term).join(', ');
+                return `
+                    <tr>
+                        <td><strong>Topic ${tc.id + 1}</strong></td>
+                        <td><strong>${tc.label}</strong></td>
+                        <td>${tc.count} (${tc.share}%)</td>
+                        <td>${kwList}</td>
+                        <td><em>"${sampleTitle}"</em></td>
+                    </tr>
+                `;
+            }).join('');
+
+            const topicSel = document.getElementById('expTopicFilter');
+            topicSel.innerHTML = '<option value="ALL">All Topics</option>' +
+                topicClusters.map(tc => `<option value="${tc.id}">${tc.shortLabel} (${tc.count})</option>`).join('');
+
+            const types = Array.from(new Set(parsedDocs.map(d => d.type))).sort();
+            document.getElementById('expTypeFilter').innerHTML = '<option value="ALL">All Types</option>' +
+                types.map(tp => `<option value="${tp}">${tp}</option>`).join('');
+
+            const allTags = new Set();
+            parsedDocs.forEach(d => d.tags.forEach(t => allTags.add(t)));
+            document.getElementById('expTagFilter').innerHTML = '<option value="ALL">All Mendeley Tags</option>' +
+                Array.from(allTags).sort().map(tg => `<option value="${tg}">${tg}</option>`).join('');
+
+            renderExplorerTable();
+        }
+
+        function renderExplorerTable() {
+            const q = (document.getElementById('expSearchInput').value || '').toLowerCase().trim();
+            const topicVal = document.getElementById('expTopicFilter').value;
+            const typeVal = document.getElementById('expTypeFilter').value;
+            const tagVal = document.getElementById('expTagFilter').value;
+
+            const filtered = parsedDocs.filter(d => {
+                if (topicVal !== 'ALL' && String(d.topicId) !== topicVal) return false;
+                if (typeVal !== 'ALL' && d.type !== typeVal) return false;
+                if (tagVal !== 'ALL' && !d.tags.includes(tagVal)) return false;
+                if (q) {
+                    const hay = `${d.key} ${d.title} ${d.authorRaw} ${d.venue} ${d.abstract} ${d.tags.join(' ')}`.toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            });
+
+            document.getElementById('expMatchCount').textContent = `Showing ${filtered.length} of ${parsedDocs.length} documents`;
+
+            const tbody = document.getElementById('tbody-explorer');
+            tbody.innerHTML = filtered.map((d, idx) => {
+                const absSnippet = d.abstract ? d.abstract.slice(0, 145) + (d.abstract.length > 145 ? '...' : '') : 'No abstract provided.';
+                const tagsHtml = d.tags.map(t => `<span class="tag-pill">${t}</span>`).join(' ') || '<span style="color:#94a3b8;">—</span>';
+                return `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td><strong>${d.year || 'N/A'}</strong></td>
+                        <td><span class="type-pill">${d.type}</span></td>
+                        <td style="max-width:340px;">
+                            <div style="font-weight:700; color:#0f172a; margin-bottom:3px;">${d.title}</div>
+                            <div style="font-size:0.76rem; color:#475569;">${absSnippet}</div>
+                        </td>
+                        <td style="max-width:180px;">${d.authors.slice(0, 3).join('; ')}${d.authors.length > 3 ? ' et al.' : ''}</td>
+                        <td style="max-width:165px;"><em>${d.venue}</em></td>
+                        <td><span style="color:${TOPIC_DEFINITIONS[d.topicId].color}; font-weight:600;">${d.topicShort}</span></td>
+                        <td style="max-width:150px;">${tagsHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        /* ===================== KPI & DASHBOARD ORCHESTRATION ===================== */
+        function updateKPIs() {
+            const total = parsedDocs.length;
+            document.getElementById('kpiTotalDocs').textContent = total;
+            const withAbs = parsedDocs.filter(d => d.abstract.length > 10).length;
+            document.getElementById('kpiTotalDocsSub').textContent = `${withAbs} entries with full abstracts`;
+
+            const yearStats = computeOutlierResistantYearStats(parsedDocs);
+            if (yearStats.min !== null) {
+                document.getElementById('kpiYearSpan').textContent = `${yearStats.min} – ${yearStats.max}`;
+                const yCounts = {};
+                yearStats.validYears.forEach(y => yCounts[y] = (yCounts[y] || 0) + 1);
+                document.getElementById('kpiYearSub').textContent = `Peak year: ${yearStats.peak} (${yCounts[yearStats.peak] || 0} docs)`;
+            } else {
+                document.getElementById('kpiYearSpan').textContent = '—';
+                document.getElementById('kpiYearSub').textContent = 'No valid years';
+            }
+
+            const tCounts = new Map();
+            parsedDocs.forEach(d => tCounts.set(d.type, (tCounts.get(d.type) || 0) + 1));
+            const topType = Array.from(tCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+            if (topType) {
+                document.getElementById('kpiDocType').textContent = topType[0];
+                document.getElementById('kpiDocTypeSub').textContent = `${topType[1]} docs (${((topType[1] / total) * 100).toFixed(1)}%)`;
+            } else {
+                document.getElementById('kpiDocType').textContent = '—';
+                document.getElementById('kpiDocTypeSub').textContent = 'No document types';
+            }
+
+            const topCluster = [...topicClusters].sort((a, b) => b.count - a.count)[0];
+            if (topCluster) {
+                document.getElementById('kpiTopTheme').textContent = topCluster.shortLabel;
+                document.getElementById('kpiTopThemeSub').textContent = `${topCluster.count} docs (${topCluster.share}%) • 6 topic clusters`;
+            } else {
+                document.getElementById('kpiTopTheme').textContent = '—';
+                document.getElementById('kpiTopThemeSub').textContent = 'No topic clusters';
+            }
+
+            document.getElementById('activeBibName').textContent = currentBibFilename;
+            document.getElementById('activeBibName').title = currentBibFilename;
+            document.getElementById('activeBibSummary').textContent = `${total} entries • Parsed in browser`;
+            document.getElementById('datasetBadge').textContent = `Dataset: ${currentBibFilename}`;
+        }
+
+        function runFullPipeline(bibRawText, filename) {
+            currentBibFilename = filename;
+            parsedDocs = parseBibTeX(bibRawText);
+            if (parsedDocs.length === 0) {
+                showToast('Warning: No valid @entries found in file.');
+                return;
+            }
+            analyzeCorpus(parsedDocs);
+            updateKPIs();
+            renderOverviewWordCloud();
+            renderMainWordCloud();
+            renderTopicWordCloudsGrid();
+            renderPublicationsPerYear();
+            renderPublicationsPerDocType();
+            renderTopVenues();
+            renderTopAuthorsAndTags();
+            renderTopicScatterMap();
+            renderTopicDistributionAndEvolution();
+            renderAllTables();
+            showToast(`Analyzed ${parsedDocs.length} BibTeX documents from ${filename}`);
+        }
+
+        function resetToEmptyState() {
+            currentBibFilename = 'None';
+            parsedDocs = [];
+            topicClusters = TOPIC_DEFINITIONS.map(td => ({ ...td, docs: [], count: 0, share: '0.0', topTerms: [] }));
+            corpusTermStats = [];
+            
+            updateKPIs();
+            renderOverviewWordCloud();
+            renderMainWordCloud();
+            renderTopicWordCloudsGrid();
+            renderPublicationsPerYear();
+            renderPublicationsPerDocType();
+            renderTopVenues();
+            renderTopAuthorsAndTags();
+            renderTopicScatterMap();
+            renderTopicDistributionAndEvolution();
+            renderAllTables();
+            showToast('Dataset cleared. Dashboard reset to empty state.');
+        }
+
+        /* ===================== NAVIGATION & ZOOM CONTROLS ===================== */
+        const VIEW_META = {
+            overview: {
+                title: 'Executive Summary & Overview',
+                sub: 'Automated bibliometric & NLP analysis of Mendeley BibTeX metadata (Abuella, 2024 methodology)'
+            },
+            wordclouds: {
+                title: 'Word Clouds: Title, Abstract & Research Topics',
+                sub: 'High-resolution corpus word clouds and term frequency rankings (Replicating Fig. 6)'
+            },
+            bibliometrics: {
+                title: 'Bibliometric Distributions & Venue Analysis',
+                sub: 'Publications per year, document types, top journals, authors & Mendeley tags (Replicating Figs. 2–5)'
+            },
+            topics: {
+                title: 'Topic Modeling, Semantic Map & Temporal Evolution',
+                sub: '2D TF-IDF document-topic map, topic frequencies & yearly evolution (Replicating Figs. 7–9)'
+            },
+            explorer: {
+                title: 'Interactive BibTeX Document Explorer',
+                sub: 'Search, filter, and export structured metadata across all parsed Mendeley entries'
+            }
+        };
+
+        function toggleAccordion(btn) {
+            btn.classList.toggle('expanded');
+            const sublist = btn.nextElementSibling;
+            if (sublist) {
+                sublist.classList.toggle('open');
+                btn.setAttribute('aria-expanded', sublist.classList.contains('open') ? 'true' : 'false');
+            }
+        }
+
+        function switchView(viewId, navBtn, subTabBtnId = null) {
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            const target = document.getElementById('view-' + viewId);
+            if (target) target.classList.add('active');
+
+            document.querySelectorAll('.nav-section-header, .nav-item').forEach(el => el.classList.remove('active'));
+            if (navBtn) navBtn.classList.add('active');
+
+            if (VIEW_META[viewId]) {
+                document.getElementById('viewTitle').textContent = VIEW_META[viewId].title;
+                document.getElementById('viewSubtitle').textContent = VIEW_META[viewId].sub;
+            }
+
+            if (subTabBtnId) {
+                const tabBtn = document.getElementById(subTabBtnId);
+                if (tabBtn) tabBtn.click();
+            }
+
+            document.getElementById('sidebar').classList.remove('mobile-open');
+        }
+
+        function switchSubTab(sectionPrefix, panelId, btnEl) {
+            const section = document.getElementById('view-' + sectionPrefix);
+            section.querySelectorAll('.sub-panel').forEach(p => p.style.display = 'none');
+            section.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const panel = document.getElementById(panelId);
+            if (panel) panel.style.display = 'block';
+            if (btnEl) btnEl.classList.add('active');
+        }
+
+        function zoomTarget(id, delta) {
+            const current = zoomLevels[id] || 1.0;
+            const next = Math.min(2.5, Math.max(0.5, +(current + delta).toFixed(2)));
+            zoomLevels[id] = next;
+            applyZoom(id, next);
+        }
+
+        function resetZoom(id) {
+            zoomLevels[id] = 1.0;
+            applyZoom(id, 1.0);
+        }
+
+        function applyZoom(id, scale) {
+            const wrap = document.getElementById('zoom-wrap-' + id);
+            const label = document.getElementById('zoom-label-' + id);
+            if (wrap) {
+                wrap.style.transform = `scale(${scale})`;
+                wrap.style.width = scale > 1 ? `${scale * 100}%` : '100%';
+            }
+            if (label) {
+                label.textContent = `${Math.round(scale * 100)}%`;
+            }
+        }
+
+        /* ===================== DOWNLOAD EXPORTERS ===================== */
+        function triggerBlobDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            showToast(`Downloaded ${filename}`);
+        }
+
+        function downloadCanvasPNG(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            canvas.toBlob(blob => {
+                if (blob) triggerBlobDownload(blob, filename);
+            }, 'image/png', 1.0);
+        }
+
+        function downloadCanvasPDF(canvasId, filename, docTitle) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            const w = canvas.width;
+            const h = canvas.height;
+            const orientation = w >= h ? 'landscape' : 'portrait';
+
+            if (window.jspdf && window.jspdf.jsPDF) {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: orientation,
+                    unit: 'pt',
+                    format: [w + 60, h + 95]
+                });
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(14);
+                pdf.setTextColor(30, 58, 138);
+                pdf.text(docTitle || filename, 30, 34);
+
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(100, 116, 139);
+                pdf.text(`Generated by Mendeley-Analytics • Source: ${currentBibFilename}`, 30, 52);
+
+                pdf.addImage(imgData, 'PNG', 30, 68, w, h);
+                pdf.save(filename);
+                showToast(`Downloaded Vector/High-DPI PDF: ${filename}`);
+                return;
+            }
+
+            const jpegDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+            const base64 = jpegDataUrl.split(',')[1];
+            const raw = atob(base64);
+            const imgBytes = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) imgBytes[i] = raw.charCodeAt(i);
+
+            const pdfW = w;
+            const pdfH = h;
+            const encoder = new TextEncoder();
+            const chunks = [];
+            const offsets = [0];
+            let byteLength = 0;
+
+            function pushStr(s) {
+                const b = encoder.encode(s);
+                chunks.push(b);
+                byteLength += b.length;
+            }
+            function pushBytes(b) {
+                chunks.push(b);
+                byteLength += b.length;
+            }
+
+            pushStr('%PDF-1.4\n');
+            offsets.push(byteLength);
+            pushStr('1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n');
+            offsets.push(byteLength);
+            pushStr('2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n');
+            offsets.push(byteLength);
+            pushStr(`3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdfW} ${pdfH}] /Contents 4 0 R /Resources << /XObject << /Im0 5 0 R >> >> >> endobj\n`);
+            const contentStream = `q ${pdfW} 0 0 ${pdfH} 0 0 cm /Im0 Do Q`;
+            offsets.push(byteLength);
+            pushStr(`4 0 obj << /Length ${contentStream.length} >> stream\n${contentStream}\nendstream endobj\n`);
+            offsets.push(byteLength);
+            pushStr(`5 0 obj << /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.length} >> stream\n`);
+            pushBytes(imgBytes);
+            pushStr('\nendstream endobj\n');
+
+            const xrefStart = byteLength;
+            pushStr(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`);
+            for (let i = 1; i < offsets.length; i++) {
+                pushStr(String(offsets[i]).padStart(10, '0') + ' 00000 n \n');
+            }
+            pushStr(`trailer << /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+
+            const pdfBlob = new Blob(chunks, { type: 'application/pdf' });
+            triggerBlobDownload(pdfBlob, filename);
+        }
+
+        function downloadTableTXT(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const rows = Array.from(table.querySelectorAll('tr')).map(tr =>
+                Array.from(tr.querySelectorAll('th, td')).map(cell => cell.innerText.replace(/\s+/g, ' ').trim())
+            );
+            if (rows.length === 0) return;
+
+            const colWidths = rows[0].map((_, cIdx) =>
+                Math.min(48, Math.max(...rows.map(r => (r[cIdx] || '').length)))
+            );
+
+            const sepLine = colWidths.map(w => '-'.repeat(w)).join('-+-');
+            const formattedLines = [
+                `Mendeley-Analytics Table Export | Source: ${currentBibFilename}`,
+                '='.repeat(sepLine.length)
+            ];
+
+            rows.forEach((r, rIdx) => {
+                const line = r.map((val, cIdx) => {
+                    const clipped = val.length > 48 ? val.slice(0, 45) + '...' : val;
+                    return clipped.padEnd(colWidths[cIdx], ' ');
+                }).join(' | ');
+                formattedLines.push(line);
+                if (rIdx === 0) formattedLines.push(sepLine);
+            });
+
+            const blob = new Blob([formattedLines.join('\n')], { type: 'text/plain;charset=utf-8' });
+            triggerBlobDownload(blob, filename);
+        }
+
+        function downloadTableCSV(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const rows = Array.from(table.querySelectorAll('tr')).map(tr =>
+                Array.from(tr.querySelectorAll('th, td')).map(cell => {
+                    const txt = cell.innerText.replace(/\s+/g, ' ').trim().replace(/"/g, '""');
+                    return `"${txt}"`;
+                }).join(',')
+            );
+            const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+            triggerBlobDownload(blob, filename);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        /* ===================== INTERACTIVE SCATTER HOVER ===================== */
+        function setupScatterHover() {
+            const canvas = document.getElementById('canvas-topic-map');
+            const tooltip = document.getElementById('scatterTooltip');
+
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const mx = (e.clientX - rect.left) * scaleX;
+                const my = (e.clientY - rect.top) * scaleY;
+
+                let found = null;
+                for (let i = 0; i < scatterPointsCache.length; i++) {
+                    const pt = scatterPointsCache[i];
+                    const dist = Math.hypot(mx - pt.px, my - pt.py);
+                    if (dist <= pt.r + 3) {
+                        found = pt.doc;
+                        break;
+                    }
+                }
+
+                if (found) {
+                    canvas.style.cursor = 'pointer';
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = Math.min(window.innerWidth - 360, e.clientX + 14) + 'px';
+                    tooltip.style.top = Math.min(window.innerHeight - 140, e.clientY + 14) + 'px';
+                    tooltip.innerHTML = `
+                        <div style="font-weight:700; color:#93c5fd; margin-bottom:4px;">${found.topicShort} (${found.year || 'N/A'})</div>
+                        <div style="font-weight:600; margin-bottom:4px;">${found.title}</div>
+                        <div style="color:#cbd5e1; font-size:0.73rem;">${found.authors.slice(0, 2).join(', ')} • <em>${found.venue}</em></div>
+                    `;
+                } else {
+                    canvas.style.cursor = 'default';
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+        }
+
+window.onload = function () {
+            // 1. Initialize dashboard in clean empty state
+            resetToEmptyState();
+
+            // 2. Wire up dynamic .bib file uploader
+            document.getElementById('bibFileInput').addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (evt) {
+                    runFullPipeline(evt.target.result, file.name);
+                };
+                reader.readAsText(file);
+            });
+
+            // 3. Wire up Clear button
+            document.getElementById('resetBibBtn').addEventListener('click', function () {
+                document.getElementById('bibFileInput').value = '';
+                resetToEmptyState();
+            });
+
+            // 4. Enable interactive hover inspection on 2D Document-Topic Map
+            setupScatterHover();
+        };
+
+    </script>
+</body>
+</html>
