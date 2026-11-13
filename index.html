@@ -798,6 +798,7 @@
                 </label>
                 <input type="file" id="bibFileInput" accept=".bib,.txt" style="display:none;">
                 <button class="btn-reset-bib" id="resetBibBtn" title="Clear dataset">Clear</button>
+                <button class="btn-upload" id="folderBtn" style="display:none; border:none; cursor:pointer;" title="Grant access to this dashboard's folder so the .bib file is loaded automatically">📁 Connect folder</button>
             </div>
         </div>
 
@@ -2785,12 +2786,12 @@
             }
 
             const topCluster = [...topicClusters].sort((a, b) => b.count - a.count)[0];
-            if (topCluster) {
+            if (total > 0 && topCluster && topCluster.count > 0) {
                 document.getElementById('kpiTopTheme').textContent = topCluster.shortLabel;
                 document.getElementById('kpiTopThemeSub').textContent = `${topCluster.count} docs (${topCluster.share}%) • 6 topic clusters`;
             } else {
                 document.getElementById('kpiTopTheme').textContent = '—';
-                document.getElementById('kpiTopThemeSub').textContent = 'No topic clusters';
+                document.getElementById('kpiTopThemeSub').textContent = total > 0 ? 'No topic clusters' : 'No documents to analyze';
             }
 
             document.getElementById('activeBibName').textContent = currentBibFilename;
@@ -3125,29 +3126,198 @@
             });
         }
 
-window.onload = function () {
+/* ===================== AUTO-LOAD .bib FROM THE DASHBOARD'S PARENT FOLDER ===================== */
+        // Optional override: <meta name="bib-file" content="MyFile.bib"> in <head>, or open index.html?bib=MyFile.bib
+        const IS_LOCAL_FILE = location.protocol === 'file:';
+
+        function pickBestBib(names) {
+            const bibs = [...new Set(names)].filter(n => /\.bib$/i.test(n));
+            if (!bibs.length) return null;
+            const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+            const score = n => {            // newest year/month in the filename wins
+                const l = n.toLowerCase();
+                const y = (l.match(/(19|20)\d{2}/) || ['0'])[0];
+                const m = months.findIndex(mo => l.includes(mo)) + 1;
+                return parseInt(y, 10) * 100 + m;
+            };
+            bibs.sort((a, b) => score(b) - score(a) || b.localeCompare(a));
+            return bibs[0];
+        }
+
+        function setBibStatus(t) {
+            const el = document.getElementById('activeBibSummary');
+            if (el) el.textContent = t;
+        }
+
+        /* ---- Mode A: served over http(s) (local server, GitHub Pages) ---- */
+        async function bibNamesFromDirectoryListing() {
+            const res = await fetch('./', { cache: 'no-store' });
+            if (!res.ok) throw new Error('no listing');
+            const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+            return Array.from(doc.querySelectorAll('a'))
+                .map(a => (a.getAttribute('href') || '').split(/[?#]/)[0])
+                .map(h => { try { return decodeURIComponent(h).split('/').pop(); } catch (e) { return ''; } })
+                .filter(n => /\.bib$/i.test(n));
+        }
+
+        async function bibNamesFromGitHub() {
+            const host = location.hostname;
+            if (!/\.github\.io$/i.test(host)) throw new Error('not github pages');
+            const user = host.split('.')[0];
+            const parts = location.pathname.split('/').filter(Boolean);
+            if (parts.length && /\.html?$/i.test(parts[parts.length - 1])) parts.pop();
+            const repo = parts.length ? parts[0] : host;
+            const sub = parts.slice(1).join('/');
+            const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${sub}`);
+            if (!res.ok) throw new Error('api unavailable');
+            return (await res.json()).filter(i => i.type === 'file').map(i => i.name);
+        }
+
+
+        async function guessBibByName() {
+            const short = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const long = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const prefixes = ['Mendeley_Collection', 'Mendeley_Library', 'Mendeley', 'Collection', 'Library', 'library', 'references'];
+            const exists = async n => {
+                try { const r = await fetch(encodeURI(n), { method: 'HEAD', cache: 'no-store' }); return r.ok ? n : null; }
+                catch (e) { return null; }
+            };
+            const thisYear = new Date().getFullYear();
+            for (let y = thisYear + 1; y >= 2015; y--) {
+                // Newest month first within each year; one parallel batch per year
+                const batch = [];
+                for (let m = 11; m >= 0; m--) {
+                    prefixes.forEach(pre => {
+                        batch.push(`${pre}_${short[m]}_${y}.bib`);
+                        if (long[m] !== short[m]) batch.push(`${pre}_${long[m]}_${y}.bib`);
+                    });
+                }
+                const hits = (await Promise.all(batch.map(exists))).filter(Boolean);
+                if (hits.length) return pickBestBib(hits);
+            }
+            // Undated names
+            const plain = (await Promise.all(prefixes.map(p => exists(p + '.bib')))).filter(Boolean);
+            return plain.length ? plain[0] : null;
+        }
+
+        async function autoLoadViaHttp() {
+            const meta = document.querySelector('meta[name="bib-file"]');
+            let filename = new URLSearchParams(location.search).get('bib') || (meta && meta.content.trim()) || null;
+            if (!filename) {
+                for (const strat of [bibNamesFromDirectoryListing, bibNamesFromGitHub]) {
+                    try { filename = pickBestBib(await strat()); if (filename) break; } catch (e) {}
+                }
+            }
+            // Fallback (e.g. GitHub API rate-limited): probe likely names, newest month/year first
+            if (!filename) filename = await guessBibByName();
+            if (!filename) {
+                setBibStatus('No .bib file auto-detected in this folder. Upload one manually.');
+                return;
+            }
+            try {
+                const res = await fetch(encodeURI(filename), { cache: 'no-store' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                runFullPipeline(await res.text(), filename);
+            } catch (err) {
+                setBibStatus('Found "' + filename + '" but could not load it. Upload it manually.');
+            }
+        }
+
+        /* ---- Mode B: opened by double-click (file://) -> browsers block reading sibling files,
+                so use the File System Access API: pick the folder ONCE, the handle is remembered ---- */
+        const HANDLE_DB = 'mendeley-dashboard-db', HANDLE_STORE = 'handles', HANDLE_KEY = 'folder';
+        function idb() {
+            return new Promise((res, rej) => {
+                const r = indexedDB.open(HANDLE_DB, 1);
+                r.onupgradeneeded = () => r.result.createObjectStore(HANDLE_STORE);
+                r.onsuccess = () => res(r.result);
+                r.onerror = () => rej(r.error);
+            });
+        }
+        async function saveHandle(h) {
+            try { const db = await idb(); db.transaction(HANDLE_STORE, 'readwrite').objectStore(HANDLE_STORE).put(h, HANDLE_KEY); } catch (e) {}
+        }
+        async function loadHandle() {
+            try {
+                const db = await idb();
+                return await new Promise(res => {
+                    const q = db.transaction(HANDLE_STORE).objectStore(HANDLE_STORE).get(HANDLE_KEY);
+                    q.onsuccess = () => res(q.result || null);
+                    q.onerror = () => res(null);
+                });
+            } catch (e) { return null; }
+        }
+
+        async function loadBibFromDirHandle(dir) {
+            const names = [];
+            for await (const [name, h] of dir.entries()) if (h.kind === 'file') names.push(name);
+            const best = pickBestBib(names);
+            if (!best) { setBibStatus('No .bib file found in the selected folder.'); return false; }
+            const file = await (await dir.getFileHandle(best)).getFile();
+            runFullPipeline(await file.text(), best);
+            return true;
+        }
+
+        async function autoLoadViaFolderHandle() {
+            const btn = document.getElementById('folderBtn');
+            if (!window.showDirectoryPicker) {
+                setBibStatus('Browser blocks local file access. Use Chrome/Edge, run start_dashboard.bat, or upload the .bib.');
+                return;
+            }
+            btn.style.display = 'inline-flex';
+            btn.onclick = async () => {
+                try {
+                    let dir = await loadHandle();
+                    if (dir && (await dir.requestPermission({ mode: 'read' })) !== 'granted') dir = null;
+                    if (!dir) dir = await window.showDirectoryPicker({ id: 'mendeley-dashboard', mode: 'read' });
+                    await saveHandle(dir);
+                    if (await loadBibFromDirHandle(dir)) btn.textContent = '🔄 Reload from folder';
+                } catch (e) { if (e.name !== 'AbortError') setBibStatus('Could not read folder: ' + e.message); }
+            };
+            const saved = await loadHandle();
+            if (saved) {
+                try {
+                    if ((await saved.queryPermission({ mode: 'read' })) === 'granted' && await loadBibFromDirHandle(saved)) {
+                        btn.textContent = '🔄 Reload from folder';
+                        return;
+                    }
+                } catch (e) {}
+                btn.textContent = '🔄 Reconnect folder';
+                setBibStatus('Click "Reconnect folder" to load the .bib (one click, browser permission).');
+            } else {
+                setBibStatus('Click "Connect folder" once and select this dashboard\'s folder.');
+            }
+        }
+
+        function autoLoadBibFromFolder() {
+            setBibStatus('Looking for a .bib file in the folder…');
+            return IS_LOCAL_FILE ? autoLoadViaFolderHandle() : autoLoadViaHttp();
+        }
+
+        window.onload = function () {
             // 1. Initialize dashboard in clean empty state
             resetToEmptyState();
 
-            // 2. Wire up dynamic .bib file uploader
+            // 2. Manual .bib upload (still available)
             document.getElementById('bibFileInput').addEventListener('change', function (e) {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = function (evt) {
-                    runFullPipeline(evt.target.result, file.name);
-                };
+                reader.onload = function (evt) { runFullPipeline(evt.target.result, file.name); };
                 reader.readAsText(file);
             });
 
-            // 3. Wire up Clear button
+            // 3. Clear button
             document.getElementById('resetBibBtn').addEventListener('click', function () {
                 document.getElementById('bibFileInput').value = '';
                 resetToEmptyState();
             });
 
-            // 4. Enable interactive hover inspection on 2D Document-Topic Map
+            // 4. Interactive hover on the topic map
             setupScatterHover();
+
+            // 5. Auto-load the .bib sitting next to index.html
+            autoLoadBibFromFolder();
         };
 
     </script>
