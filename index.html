@@ -857,6 +857,13 @@
                     <span>4. Interactive BibTeX Document Explorer</span>
                 </button>
             </div>
+
+            <!-- Section 5: GitHub Repo -->
+            <div class="nav-section">
+                <button class="nav-section-header" onclick="switchView('github', this)">
+                    <span>5. GitHub Repo &amp; Data</span>
+                </button>
+            </div>
         </nav>
     </aside>
 
@@ -1504,6 +1511,33 @@
                     <div class="download-group">
                         <button class="btn-download txt-btn" onclick="downloadTableTXT('table-explorer', 'Mendeley_BibTeX_Documents.txt')">⬇️ TXT</button>
                         <button class="btn-download" onclick="downloadTableCSV('table-explorer', 'Mendeley_BibTeX_Documents.csv')">⬇️ CSV</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== VIEW 5: GITHUB REPO ==================== -->
+        <section id="view-github" class="view-section">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 32px; box-shadow: var(--shadow-sm);">
+                <h3 style="color: var(--primary); margin-bottom: 12px; font-size: 1.2rem;">Mendeley Analytics Dashboard Repository</h3>
+                <p style="color: var(--text-main); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+                    The dashboard source code (<code>index.html</code>) and the Mendeley <code>.bib</code> database files analyzed here are publicly available on GitHub.
+                    The dashboard automatically loads the newest <code>.bib</code> file found in the repository folder.
+                </p>
+                <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+                    <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; padding:16px 20px; display:inline-flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.2rem;">🔗</span>
+                        <a href="https://github.com/MohamedAbuella/Mendeley_Analytics_Dashboard" target="_blank" rel="noopener" style="color: var(--primary-light); font-weight: 600; text-decoration: none; font-size: 1.05rem;">
+                            https://github.com/MohamedAbuella/Mendeley_Analytics_Dashboard
+                        </a>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">(source code &amp; data)</span>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid var(--border-color); border-radius:6px; padding:16px 20px; display:inline-flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.2rem;">🌐</span>
+                        <a href="https://mohamedabuella.github.io/Mendeley_Analytics_Dashboard/" target="_blank" rel="noopener" style="color: var(--primary-light); font-weight: 600; text-decoration: none; font-size: 1.05rem;">
+                            https://mohamedabuella.github.io/Mendeley_Analytics_Dashboard/
+                        </a>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">(live dashboard)</span>
                     </div>
                 </div>
             </div>
@@ -2843,6 +2877,10 @@
 
         /* ===================== NAVIGATION & ZOOM CONTROLS ===================== */
         const VIEW_META = {
+            github: {
+                title: 'GitHub Repo & Data',
+                sub: 'Open-source code and Mendeley BibTeX database for this dashboard'
+            },
             overview: {
                 title: 'Executive Summary & Overview',
                 sub: 'Automated bibliometric & NLP analysis of Mendeley BibTeX metadata (Abuella, 2024 methodology)'
